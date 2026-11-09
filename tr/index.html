@@ -1009,6 +1009,12 @@ body.ksh-open{overflow:hidden}
 .spk-mn{background:#FF5C8A;color:#2B0612}
 .spk-mn:disabled{background:#FF5C8A;color:#2B0612;opacity:.3}
 .spk-qn{flex:none;min-width:40px;height:40px;padding:0 10px;border-radius:20px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-weight:900;font-size:19px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+
+/* ---- Dokunma: çift dokunmada yakınlaşma yok, düğmeler anında tepki verir ---- */
+html,body{touch-action:manipulation}
+button,a,input,select,label,.spk-mid{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.spk-mn,.spk-pl,.ksh-q button,.ksh-fast button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.spk-mn:not(:disabled):active,.spk-pl:active{filter:brightness(.85);transform:scale(.94);transition:transform .05s}
 </style>
 </head>
 <body>
