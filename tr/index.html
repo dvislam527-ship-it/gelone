@@ -1020,6 +1020,20 @@ button,a,input,select,label,.spk-mid{touch-action:manipulation;-webkit-tap-highl
 .spk-r .spk-p.cp,.ksh-cp{color:#1FAE70}
 .spk-lp{font-size:11.5px;color:var(--mute);font-weight:600;line-height:1.2}
 .spk-meta{row-gap:2px;column-gap:7px}
+
+/* ---- Hesaplaşma: tıklanabilir Giderler kartı ve liste ---- */
+.statbtn{font:inherit;color:inherit;text-align:start;cursor:pointer;border:1px solid var(--line);width:100%;display:block}
+.statbtn:active{transform:scale(.98)}
+.stat-more{float:right;font-size:11px;font-weight:700;color:var(--c-rapor,#FF5C8A)}
+.gl-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.gl-tot{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.gl-cats{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;padding:12px;border-radius:14px;background:var(--panel2)}
+.gl-cat{display:grid;grid-template-columns:minmax(0,1fr) 34% auto;gap:8px;align-items:center;font-size:13.5px}
+.gl-cat span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl-cat b{font-variant-numeric:tabular-nums}
+.gl-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.gl-bar i{display:block;height:100%;background:var(--c-rapor,#FF5C8A);border-radius:4px}
+.gl-lst{max-height:none}
 </style>
 </head>
 <body>
@@ -3085,6 +3099,20 @@ function xlsCard(){
   <div class="row">${[["boss",P_.boss],...P_.shares.map(x=>[x.id,x.name])].map(([id,n])=>`<button class="btn g s" style="flex:1" onclick="xlsExport('${id}')">${esc(n)}</button>`).join("")}</div></div>`;
 }
 let hMon="all";
+function gidList(){
+  const rows=S.expenses.filter(x=>hMon==="all"||String(x.date||"").startsWith(hMon)).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.time||"").localeCompare(String(a.time||"")));
+  const tot=r2(rows.reduce((a,x)=>a+num(x.amount),0));
+  const by={};rows.forEach(x=>{const k=DV(x.cat||"Diğer");by[k]=r2((by[k]||0)+num(x.amount))});
+  const cats=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+  const per=hMon==="all"?"Tüm zamanlar":MONTHL[+hMon.slice(5)-1]+" "+hMon.slice(0,4);
+  $("#sheet").innerHTML=`<div class="gl">
+   <div class="gl-hd"><div><h2 style="margin:0">Giderler</h2><small class="foot" style="margin:0">${per} · ${rows.length} kayıt</small></div><b class="neg gl-tot">−${fmt(tot)}</b></div>
+   ${cats.length>1?`<div class="gl-cats">${cats.map(([k,v])=>`<div class="gl-cat"><span>${esc(k)}</span><span class="gl-bar"><i style="width:${tot?Math.max(3,v/tot*100):0}%"></i></span><b>${fmt(v)}</b></div>`).join("")}</div>`:""}
+   ${rows.length?`<div class="lst gl-lst">${rows.map(r=>`<div class="li" onclick="closeM();${r.ins?`showR('${r.ins}')`:`editX('${r.id}')`}"><span>${esc(r.cat)}<small>${fD(r.date)}${r.time?" "+esc(r.time):""}${r.note?" · "+esc(r.note):""}</small></span><span class="side"><b class="neg">${r.fx?somF(r.fx.amt)+`<small style="display:block;text-align:right">${fmt(r.amount)}</small>`:fmt(r.amount)}</b></span></div>`).join("")}</div>`:`<div class="empty">Bu dönemde gider yok.</div>`}
+   <button class="btn g" style="width:100%;margin-top:12px" onclick="closeM()">Kapat</button>
+  </div>`;
+  $("#modal").classList.add("on");
+}
 function hesap(){
   const t=today();const pred=hMon==="all"?null:(d=>d&&d.startsWith(hMon));
   const L=ledger(pred),all=hMon==="all"?L:ledger(),cash=cashOnHand(),debt=cust().reduce((a,x)=>a+Math.max(0,x.debt),0);
@@ -3099,7 +3127,7 @@ function hesap(){
    <div class="stat"><small>Satış</small><b>${fmt(L.st.ciro)}</b></div>
    <div class="stat"><small>Mal parası (maliyet)</small><b>${fmt(L.cogs)}</b></div>
    <div class="stat"><small>Toplam kâr</small><b>${fmt(L.prof)}</b></div>
-   <div class="stat"><small>Giderler</small><b class="neg">−${fmt(L.gid)}</b></div>
+   <button type="button" class="stat statbtn" onclick="gidList()" aria-label="Giderlerin listesini aç"><small>Giderler <span class="stat-more">Listeyi gör ›</span></small><b class="neg">−${fmt(L.gid)}</b></button>
    <div class="stat hero" style="grid-column:1/-1"><small>Net kâr (bölünecek)</small><b class="${L.net<0?"neg":""}">${fmt(L.net)}</b><div class="sub2">${[[PART().boss,bossPct()],...PART().shares.map(x=>[x.name,x.pct])].map(([n,p])=>`<span>${esc(n)} %${fmtN(p)}</span>`).join("")}</div></div>
   </div>
   ${card(L.boss,1)}${L.ps.map(o=>card(o)).join("")}
