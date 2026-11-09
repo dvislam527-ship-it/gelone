@@ -855,6 +855,40 @@ body[data-tab="sandoq"] .bar::after,body[data-tab="hesap"] .bar::after{backgroun
 body[data-tab="rapor"] .bar::after,body[data-tab="gider"] .bar::after{background:var(--c-rapor)!important}
 body[data-tab="panel"] .bar::after{background:var(--c-ana)!important}
 body[data-tab] .bar::after{height:4px!important;opacity:1!important}
+
+/* ---- Satış: ürün seçme kartları ---- */
+.spk-top{display:flex;gap:8px;align-items:center}
+.spk-top input{flex:1;min-width:0;margin:0}
+.spk-h{flex:1;font-weight:800;font-size:16px}
+.spk-scan{flex:none;width:48px;height:48px;border-radius:14px;border:0;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);display:grid;place-items:center;cursor:pointer}
+.spk #cam:not(:empty){margin-top:10px}
+.spk #cam video{width:100%;border-radius:14px;max-height:240px;object-fit:cover;background:#000}
+.spk-cats{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;scrollbar-width:none}
+.spk-cats::-webkit-scrollbar{display:none}
+.spk-cats button{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.spk-cats button small{opacity:.6;font-weight:600;margin-left:2px}
+.spk-cats button.on{background:var(--c-satis,#FF8A3D);border-color:transparent;color:var(--c-satis-ink,#2A1400)}
+.spk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+@media (min-width:620px){.spk-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+.spk-c{position:relative;display:flex;flex-direction:column;border-radius:18px;background:var(--panel2);border:2px solid transparent;overflow:hidden;min-width:0}
+.spk-c.inc{border-color:var(--c-satis,#FF8A3D)}
+.spk-c.out{opacity:.5}
+.spk-tap{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:0 0 10px;min-width:0}
+.spk-tap:focus-visible{outline:3px solid var(--acc);outline-offset:-3px;border-radius:16px}
+.spk-img{position:relative;display:block;aspect-ratio:4/3;background:var(--panel);margin-bottom:6px}
+.spk-img img{width:100%;height:100%;object-fit:cover;display:block}
+.spk-ini{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:30px;font-weight:900;text-transform:uppercase}
+.spk-q{position:absolute;top:8px;left:8px;min-width:30px;height:30px;padding:0 8px;border-radius:15px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-style:normal;font-weight:900;font-size:15px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.spk-st{position:absolute;bottom:6px;right:6px;font-style:normal;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(15,20,25,.72);color:#fff;font-variant-numeric:tabular-nums}
+.spk-st.low{background:#FFD23F;color:#2A2100}
+.spk-st.out{background:#FF5C8A;color:#2B0612}
+.spk-n{padding:0 10px;font-weight:800;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
+.spk-sp{padding:0 10px;color:var(--mute);font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.spk-p{padding:2px 10px 0;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+.spk-step{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 8px 8px}
+.spk-step button{width:44px;height:38px;border:0;border-radius:12px;background:var(--panel);color:var(--ink);font-size:22px;font-weight:800;cursor:pointer;display:grid;place-items:center}
+.spk-step button:last-child{background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
+.spk-step b{flex:1;text-align:center;font-size:17px;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1146,7 +1180,7 @@ function bars(top,n=6){
 function dayList(n){const out=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(loc(d).slice(0,10))}return out}
 
 /* ---------- Ana sayfa ---------- */
-const IC={home:"M3 11l9-7 9 7v9H3z",cart:"M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01",box:"M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10",inb:"M12 3v12M7 10l5 5 5-5M4 21h16",exp:"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6",users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5",chart:"M4 20V11M10 20V5M16 20v-8M22 20H2",gear:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2",pie:"M12 3a9 9 0 1 0 9 9h-9zM15 3.3A9 9 0 0 1 20.7 9H15z",cal:"M4 6h16v15H4zM4 10h16M8 3v4M16 3v4",note:"M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",coin:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM14.5 9H11a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9.5M12 7v2M12 15v2",trash:"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"};
+const IC={scan:"M4 7V5a1 1 0 011-1h2M17 4h2a1 1 0 011 1v2M20 17v2a1 1 0 01-1 1h-2M7 20H5a1 1 0 01-1-1v-2M8 8v8M12 8v8M16 8v8",home:"M3 11l9-7 9 7v9H3z",cart:"M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01",box:"M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10",inb:"M12 3v12M7 10l5 5 5-5M4 21h16",exp:"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6",users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5",chart:"M4 20V11M10 20V5M16 20v-8M22 20H2",gear:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2",pie:"M12 3a9 9 0 1 0 9 9h-9zM15 3.3A9 9 0 0 1 20.7 9H15z",cal:"M4 6h16v15H4zM4 10h16M8 3v4M16 3v4",note:"M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",coin:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM14.5 9H11a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9.5M12 7v2M12 15v2",trash:"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"};
 const TICON={hesap:"pie",sandoq:"wal",servis:"tool",panel:"home",islem:"clock",kasa:"cart",urun:"box",alis:"inb",gider:"exp",musteri:"users",rapor:"chart",ayar:"gear"};
 const svgI=(k,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="${IC[k]}"/></svg>`;
 const PAL=["#1fc7b6","#f4b955","#ff6f61","#8b7bff","#6cb4ff","#45d99a"];
@@ -1261,6 +1295,8 @@ function panel(){
 }
 
 function quickBuy(pid){pIn(pid)}
+let kCat="";
+function kScan(){camScan(code=>{const p=AP().find(x=>String(x.barcode||"").trim()===String(code).trim());if(p){addCart(p.id);toast(p.name+" sepete eklendi")}else toast("Bu barkodlu ürün bulunamadı")})}
 
 /* ---------- Kasa ---------- */
 function kasa(){
@@ -1272,10 +1308,27 @@ function kasa(){
   const cc=cartCid&&S.customers.find(x=>x.id===cartCid),cd=cc?(cust().find(x=>x.c.id===cc.id)||{debt:0}).debt:0;
   return `<div class="card custbar" id="kasatop">${cc?cav(cc,40):`<span class="pav" style="width:40px;height:40px;border-radius:50%;color:var(--mute)">${svgI("cart",20)}</span>`}<span class="pmid"><small class="foot" style="margin:0">Müşteri</small><b>${cc?esc(cc.name):"Perakende satış"}</b>${cd>0.004?`<small class="neg">Güncel veresiye ${fmt(cd)}</small>`:cd<-0.004?`<small class="pos">Peşin ödenen ${fmt(-cd)}</small>`:""}</span><button class="btn s g" onclick="cartChosen=false;render();scrollTo(0,0)">Değiştir</button></div>
   <div class="pos-grid">
-  <div><div class="card">
-    ${S.products.length>4?`<input id="q" type="search" placeholder="Ürün ara: ad, marka, model…" value="${esc(Q)}" oninput="srch(this.value)">`:""}
-    <div class="chips">${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);const chip=`<button class="chip${inc?" inc":""}" onclick="addCart('${p.id}')">${inc?`<i class="cbadge">${fmtN(inc.qty)}</i>`:""}${pav(p,34)}<span class="cmid"><span class="cn">${esc(p.name)}</span>${spec(p)?`<small class="spec" dir="auto">${esc(spec(p))}</small>`:""}<small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}</small></span></button>`;
-      return inc?`<div class="chipw">${chip}<div class="cstep"><button type="button" aria-label="Bir azalt" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="Bir artır" onclick="addCart('${p.id}')">+</button></div></div>`:chip}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
+  <div><div class="card spk">
+    <div class="spk-top">
+      ${S.products.length>4?`<input id="q" type="search" placeholder="Ürün ara: ad, marka, model…" value="${esc(Q)}" oninput="srch(this.value)">`:`<span class="spk-h">Ürün seçin</span>`}
+      <button type="button" class="spk-scan" onclick="kScan()" aria-label="Barkod okut" title="Barkod okut">${svgI("scan",22)}</button>
+    </div>
+    <div id="cam"></div>
+    ${(()=>{const cs=[...new Set(AP().map(p=>p.cat||"").filter(Boolean))];if(cs.length<2)return "";
+      const n=k=>AP().filter(p=>(p.cat||"")===k).length;
+      return `<div class="spk-cats">${[["","Tümü",AP().length],...cs.map(k=>[k,k,n(k)])].map(([k,l,c])=>`<button type="button" class="${kCat===k?"on":""}" onclick="kCat=${JSON.stringify(k).replace(/"/g,"&quot;")};render()">${esc(l)} <small>${c}</small></button>`).join("")}</div>`})()}
+    <div class="spk-grid">${list.filter(p=>!kCat||(p.cat||"")===kCat).map((p,ix)=>({p,ix,s:num(st[p.id])})).sort((a,b)=>((a.s<=0)-(b.s<=0))||a.ix-b.ix).map(({p,s:stk})=>{
+      const inc=cart.find(c=>c.pid===p.id),col=p.color||PCOL[[...(p.name||"")].length%PCOL.length];
+      const lv=stk<=0?"out":(num(p.min)&&stk<=num(p.min))?"low":"ok";
+      const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
+      return `<div class="spk-c${inc?" inc":""}${lv==="out"?" out":""}">
+        <button type="button" class="spk-tap" onclick="addCart('${p.id}')" aria-label="${esc(p.name)} sepete ekle">
+          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}">${lv==="out"?"Stokta yok":fmtN(stk)+" "+esc(unitOf(p))}</i></span>
+          <span class="spk-n">${esc(p.name)}</span>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}
+          <b class="spk-p">${fmt(num(p.price))}</b>
+        </button>
+        ${inc?`<div class="spk-step"><button type="button" aria-label="Bir azalt" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="Bir artır" onclick="addCart('${p.id}')">+</button></div>`:""}
+      </div>`}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
   </div></div>
   <div><div class="card"><h2>Sepet${cart.length?` <span class="foot" style="font-weight:400">· ${cart.length} çeşit ürün</span>`:""}</h2>
     ${cart.length?cart.map((x,i)=>{const p=P(x.pid)||{name:pname(x.pid)},sp=spec(p);return `<div class="cl">
