@@ -1015,6 +1015,11 @@ html,body{touch-action:manipulation}
 button,a,input,select,label,.spk-mid{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .spk-mn,.spk-pl,.ksh-q button,.ksh-fast button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .spk-mn:not(:disabled):active,.spk-pl:active{filter:brightness(.85);transform:scale(.94);transition:transform .05s}
+
+/* ---- Müşteriye özel son fiyat ---- */
+.spk-r .spk-p.cp,.ksh-cp{color:#1FAE70}
+.spk-lp{font-size:11.5px;color:var(--mute);font-weight:600;line-height:1.2}
+.spk-meta{row-gap:2px;column-gap:7px}
 </style>
 </head>
 <body>
@@ -1429,10 +1434,10 @@ function kDraw(){
   let el=$("#ksheet");if(!kS){if(el)el.remove();document.body.classList.remove("ksh-open");return}
   const p=P(kS.pid),st=(calc().find(x=>x.p.id===p.id)||{stock:0}).stock,col=p.color||PCOL[[...(p.name||"")].length%PCOL.length];
   const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
-  const inc=cart.find(c=>c.pid===kS.pid),pr=inc?inc.price:num(p.price);
+  const inc=cart.find(c=>c.pid===kS.pid),lp=inc?null:lastCustPrice(cartCid,p.id),pr=inc?inc.price:(lp!=null?lp:num(p.price)),dif=r2(pr)!==r2(num(p.price));
   if(!el){el=document.createElement("div");el.id="ksheet";document.body.appendChild(el);document.body.classList.add("ksh-open")}
   el.innerHTML=`<div class="ksh-bg" onclick="kClose()"></div><div class="ksh-p" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
-    <div class="ksh-hd"><span class="ksh-img">${img}</span><span class="ksh-t"><b>${esc(p.name)}</b>${spec(p)?`<small>${esc(spec(p))}</small>`:""}<small>${fmt(pr)} · Stokta ${fmtN(st)} ${esc(unitOf(p))}</small></span><button type="button" class="ksh-x" aria-label="Kapat" onclick="kClose()">✕</button></div>
+    <div class="ksh-hd"><span class="ksh-img">${img}</span><span class="ksh-t"><b>${esc(p.name)}</b>${spec(p)?`<small>${esc(spec(p))}</small>`:""}<small><b class="${dif?"ksh-cp":""}">${fmt(pr)}</b>${dif?` (${inc&&!inc.cust?"değiştirildi":"bu müşteriye son fiyat"} · liste ${fmt(num(p.price))})`:""} · Stokta ${fmtN(st)} ${esc(unitOf(p))}</small></span><button type="button" class="ksh-x" aria-label="Kapat" onclick="kClose()">✕</button></div>
     <div class="ksh-q"><button type="button" aria-label="Bir azalt" onclick="kAdd(-1)">−</button><input id="kq" inputmode="decimal" aria-label="Adet" value="${fmtN(kS.q)}" onfocus="this.select()" onchange="kS.q=Math.max(0,num(this.value));kDraw()"><button type="button" class="pl" aria-label="Bir artır" onclick="kAdd(1)">+</button></div>
     <div class="ksh-fast"><button type="button" onclick="kAdd(5)">+5</button><button type="button" onclick="kAdd(10)">+10</button></div>
     ${kS.q>st?`<div class="ksh-warn">Stokta ${fmtN(st)} ${esc(unitOf(p))} var</div>`:""}
@@ -1473,7 +1478,7 @@ function kasa(){
       return `<div class="spk-r${inc?" inc":""}${lv==="out"?" out":""}">
         <button type="button" class="spk-mn" aria-label="${esc(p.name)}: bir azalt" onclick="cDec('${p.id}')" ${inc?"":"disabled"}>−</button>
         <button type="button" class="spk-mid" onclick="kSheet('${p.id}')" aria-label="${esc(p.name)}: adet yaz">
-          <span class="spk-info"><b class="spk-n">${esc(p.name)}</b>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}<span class="spk-meta"><b class="spk-p">${fmt(num(p.price))}</b><i class="spk-st ${lv}">${lv==="out"?"Stokta yok":"Stok "+fmtN(stk)}</i></span></span>${inc?`<span class="spk-qn" aria-label="Sepette ${fmtN(inc.qty)}">${fmtN(inc.qty)}</span>`:""}
+          <span class="spk-info"><b class="spk-n">${esc(p.name)}</b>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}<span class="spk-meta">${(()=>{const lp=inc?null:lastCustPrice(cartCid,p.id),pr=inc?inc.price:(lp!=null?lp:num(p.price)),dif=r2(pr)!==r2(num(p.price));return `<b class="spk-p${dif?" cp":""}">${fmt(pr)}</b>${dif?`<small class="spk-lp">${inc&&!inc.cust?"Değiştirildi":"Son fiyat"} · Liste ${fmt(num(p.price))}</small>`:""}`})()}<i class="spk-st ${lv}">${lv==="out"?"Stokta yok":"Stok "+fmtN(stk)}</i></span></span>${inc?`<span class="spk-qn" aria-label="Sepette ${fmtN(inc.qty)}">${fmtN(inc.qty)}</span>`:""}
         </button>
         <button type="button" class="spk-pl" aria-label="${esc(p.name)}: bir artır" onclick="addCart('${p.id}')" ${lv==="out"&&!inc?"":""}>+</button>
       </div>`}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
