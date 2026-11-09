@@ -925,6 +925,17 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .spk-step b{display:none}
 .spk-step button{flex:1;width:auto!important;height:34px!important;border-radius:12px!important;font-size:22px!important}
 }
+
+/* ---- Sepetteki ürün: telefonda 2 kart genişliğinde, büyük -/+ ---- */
+@media (max-width:619px){
+.spk-grid{grid-auto-flow:row dense}
+.spk-c.inc{grid-column:span 2}
+.spk-c.inc .spk-img{width:58px!important;margin:8px auto 4px!important}
+.spk-c.inc .spk-step{gap:6px!important;padding:2px 6px 7px!important;align-items:center}
+.spk-c.inc .spk-step b{display:block;flex:none;min-width:26px;font-size:18px;text-align:center}
+.spk-c.inc .spk-step button{flex:1 1 0;min-width:0;box-sizing:border-box;height:46px!important;border-radius:14px!important;font-size:26px!important}
+.spk-c.inc .spk-step{box-sizing:border-box;width:100%}
+}
 </style>
 </head>
 <body>
