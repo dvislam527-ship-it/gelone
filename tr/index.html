@@ -889,6 +889,23 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .spk-step button{width:32px;height:32px;border:0;border-radius:10px;background:var(--panel);color:var(--ink);font-size:19px;font-weight:800;cursor:pointer;display:grid;place-items:center}
 .spk-step button:last-child{background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
 .spk-step b{flex:1;text-align:center;font-size:14px;font-variant-numeric:tabular-nums}
+
+/* ---- Satış kartları: telefonda 4 sütun, kompakt ---- */
+@media (max-width:619px){
+.spk-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.spk-c{border-radius:12px;border-width:2px}
+.spk-img{aspect-ratio:1/1;margin-bottom:3px}
+.spk-ini{font-size:16px}
+.spk-n{padding:0 5px;font-size:11.5px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.spk-sp{display:none}
+.spk-p{padding:1px 5px 0;font-size:12.5px}
+.spk-tap{padding-bottom:6px}
+.spk-st{font-size:9.5px;padding:1px 5px;bottom:3px;right:3px;white-space:nowrap;max-width:calc(100% - 6px);overflow:hidden;text-overflow:ellipsis}
+.spk-q{top:3px;left:3px;min-width:20px;height:20px;font-size:11.5px;padding:0 5px}
+.spk-step{padding:0 3px 4px;gap:1px}
+.spk-step button{width:26px;height:28px;border-radius:8px;font-size:17px}
+.spk-step b{font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -1324,7 +1341,7 @@ function kasa(){
       const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
       return `<div class="spk-c${inc?" inc":""}${lv==="out"?" out":""}">
         <button type="button" class="spk-tap" onclick="addCart('${p.id}')" aria-label="${esc(p.name)} sepete ekle">
-          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}">${lv==="out"?"Stokta yok":fmtN(stk)+" "+esc(unitOf(p))}</i></span>
+          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}">${lv==="out"?"Yok":fmtN(stk)+" "+esc(unitOf(p))}</i></span>
           <span class="spk-n">${esc(p.name)}</span>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}
           <b class="spk-p">${fmt(num(p.price))}</b>
         </button>
