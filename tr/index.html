@@ -1002,6 +1002,13 @@ body.ksh-open{overflow:hidden}
 .spk-r .spk-ini{overflow:hidden}
 .spk-r .spk-q{position:absolute!important;top:-6px;right:-8px;left:auto!important;min-width:24px;height:24px;padding:0 6px;border-radius:12px;font-size:13px;box-shadow:0 0 0 2px var(--panel2)}
 .spk-r .spk-n{-webkit-line-clamp:2}
+
+/* ---- Liste: resimsiz, renkli − ---- */
+.spk-r .spk-img{display:none!important}
+.spk-mid{padding:8px 12px}
+.spk-mn{background:#FF5C8A;color:#2B0612}
+.spk-mn:disabled{background:#FF5C8A;color:#2B0612;opacity:.3}
+.spk-qn{flex:none;min-width:40px;height:40px;padding:0 10px;border-radius:20px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-weight:900;font-size:19px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1460,8 +1467,7 @@ function kasa(){
       return `<div class="spk-r${inc?" inc":""}${lv==="out"?" out":""}">
         <button type="button" class="spk-mn" aria-label="${esc(p.name)}: bir azalt" onclick="cDec('${p.id}')" ${inc?"":"disabled"}>−</button>
         <button type="button" class="spk-mid" onclick="kSheet('${p.id}')" aria-label="${esc(p.name)}: adet yaz">
-          <span class="spk-img">${img}${inc?`<i class="spk-q" aria-label="Sepette ${fmtN(inc.qty)}">${fmtN(inc.qty)}</i>`:""}</span>
-          <span class="spk-info"><b class="spk-n">${esc(p.name)}</b>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}<span class="spk-meta"><b class="spk-p">${fmt(num(p.price))}</b><i class="spk-st ${lv}">${lv==="out"?"Stokta yok":"Stok "+fmtN(stk)}</i></span></span>
+          <span class="spk-info"><b class="spk-n">${esc(p.name)}</b>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}<span class="spk-meta"><b class="spk-p">${fmt(num(p.price))}</b><i class="spk-st ${lv}">${lv==="out"?"Stokta yok":"Stok "+fmtN(stk)}</i></span></span>${inc?`<span class="spk-qn" aria-label="Sepette ${fmtN(inc.qty)}">${fmtN(inc.qty)}</span>`:""}
         </button>
         <button type="button" class="spk-pl" aria-label="${esc(p.name)}: bir artır" onclick="addCart('${p.id}')" ${lv==="out"&&!inc?"":""}>+</button>
       </div>`}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
