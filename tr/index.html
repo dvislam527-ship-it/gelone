@@ -936,6 +936,39 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .spk-c.inc .spk-step button{flex:1 1 0;min-width:0;box-sizing:border-box;height:46px!important;border-radius:14px!important;font-size:26px!important}
 .spk-c.inc .spk-step{box-sizing:border-box;width:100%}
 }
+
+/* ---- Satış: adet paneli ---- */
+@media (max-width:619px){.spk-c.inc{grid-column:auto}}
+.spk-step{display:none!important}
+#ksheet{position:fixed;inset:0;z-index:65}
+.ksh-bg{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.ksh-p{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--panel);color:var(--ink);border-radius:26px 26px 0 0;padding:18px max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;box-shadow:0 -10px 40px rgba(0,0,0,.35);animation:kshUp .18s ease-out}
+@keyframes kshUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.ksh-p{animation:none}}
+.ksh-hd{display:flex;align-items:center;gap:12px}
+.ksh-img{position:relative;flex:none;width:58px;height:58px;border-radius:50%;overflow:hidden;background:var(--panel2)}
+.ksh-img img{width:100%;height:100%;object-fit:cover}
+.ksh-img .spk-ini{font-size:20px}
+.ksh-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ksh-t b{font-size:18px;font-weight:900;overflow-wrap:anywhere}
+.ksh-t small{color:var(--mute);font-size:13px}
+.ksh-x{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--panel2);color:var(--ink);font-size:18px;cursor:pointer}
+.ksh-q{display:flex;align-items:center;gap:12px}
+.ksh-q button{flex:none;width:76px;height:68px;border:0;border-radius:20px;background:var(--panel2);color:var(--ink);font-size:38px;font-weight:800;cursor:pointer;display:grid;place-items:center;line-height:1}
+.ksh-q button.pl{background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
+.ksh-q button:active{transform:scale(.96)}
+.ksh-q input{flex:1;min-width:0;height:68px;margin:0;text-align:center;font-size:34px;font-weight:900;border-radius:18px;font-variant-numeric:tabular-nums}
+.ksh-fast{display:flex;gap:10px}
+.ksh-fast button{flex:1;height:48px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--ink);font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+.ksh-warn{color:var(--bad);font-weight:700;font-size:14px}
+.ksh-tot{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;color:var(--mute)}
+.ksh-tot b{font-size:24px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+.ksh-act{display:flex;gap:10px}
+.ksh-act button{height:58px;border:0;border-radius:18px;font:inherit;font-size:18px;font-weight:900;cursor:pointer}
+.ksh-rm{flex:none;padding:0 16px;background:var(--panel2);color:var(--bad)}
+.ksh-ok{flex:1;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
+.ksh-ok:disabled{opacity:.45;cursor:not-allowed}
+body.ksh-open{overflow:hidden}
 </style>
 </head>
 <body>
@@ -1344,7 +1377,29 @@ function panel(){
 function quickBuy(pid){pIn(pid)}
 let kCat="",kSoldC=null,kSoldK="";
 function kSold(){const k=S.sales.length+"|"+today();if(kSoldC&&kSoldK===k)return kSoldC;const d=new Date(Date.now()-90*864e5).toISOString().slice(0,10),m={},a={};S.sales.forEach(x=>{const q=num(x.qty);a[x.pid]=(a[x.pid]||0)+q;if(String(x.date||"")>=d)m[x.pid]=(m[x.pid]||0)+q});const r=Object.keys(m).length?m:a;kSoldC=r;kSoldK=k;return r}
-function kScan(){camScan(code=>{const p=AP().find(x=>String(x.barcode||"").trim()===String(code).trim());if(p){addCart(p.id);toast(p.name+" sepete eklendi")}else toast("Bu barkodlu ürün bulunamadı")})}
+let kS=null;
+function kSheet(pid){const p=P(pid);if(!p)return;const inc=cart.find(c=>c.pid===pid);kS={pid,q:inc?inc.qty:1,had:!!inc};kDraw()}
+function kDraw(){
+  let el=$("#ksheet");if(!kS){if(el)el.remove();document.body.classList.remove("ksh-open");return}
+  const p=P(kS.pid),st=(calc().find(x=>x.p.id===p.id)||{stock:0}).stock,col=p.color||PCOL[[...(p.name||"")].length%PCOL.length];
+  const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
+  const inc=cart.find(c=>c.pid===kS.pid),pr=inc?inc.price:num(p.price);
+  if(!el){el=document.createElement("div");el.id="ksheet";document.body.appendChild(el);document.body.classList.add("ksh-open")}
+  el.innerHTML=`<div class="ksh-bg" onclick="kClose()"></div><div class="ksh-p" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
+    <div class="ksh-hd"><span class="ksh-img">${img}</span><span class="ksh-t"><b>${esc(p.name)}</b>${spec(p)?`<small>${esc(spec(p))}</small>`:""}<small>${fmt(pr)} · Stokta ${fmtN(st)} ${esc(unitOf(p))}</small></span><button type="button" class="ksh-x" aria-label="Kapat" onclick="kClose()">✕</button></div>
+    <div class="ksh-q"><button type="button" aria-label="Bir azalt" onclick="kAdd(-1)">−</button><input id="kq" inputmode="decimal" aria-label="Adet" value="${fmtN(kS.q)}" onfocus="this.select()" onchange="kS.q=Math.max(0,num(this.value));kDraw()"><button type="button" class="pl" aria-label="Bir artır" onclick="kAdd(1)">+</button></div>
+    <div class="ksh-fast"><button type="button" onclick="kAdd(5)">+5</button><button type="button" onclick="kAdd(10)">+10</button></div>
+    ${kS.q>st?`<div class="ksh-warn">Stokta ${fmtN(st)} ${esc(unitOf(p))} var</div>`:""}
+    <div class="ksh-tot"><span>Tutar</span><b>${fmt(r2(kS.q*pr))}</b></div>
+    <div class="ksh-act">${kS.had?`<button type="button" class="ksh-rm" onclick="kS.q=0;kOk()">Sepetten çıkar</button>`:""}<button type="button" class="ksh-ok" onclick="kOk()" ${kS.q<=0&&!kS.had?"disabled":""}>${kS.had?(kS.q>0?"Güncelle":"Çıkar"):"Sepete ekle"}</button></div>
+  </div>`;
+}
+function kAdd(d){kS.q=Math.max(0,r2(num(kS.q)+d));kDraw()}
+function kClose(){kS=null;kDraw()}
+function kOk(){const q=r2(num(kS.q)),pid=kS.pid;const i=cart.findIndex(c=>c.pid===pid);
+  if(q<=0){if(i>=0)cart.splice(i,1)}else if(i>=0)cart[i].qty=q;else{const lp=lastCustPrice(cartCid,pid);cart.push({pid,qty:q,price:lp!=null?lp:num(P(pid).price),cust:lp!=null})}
+  kS=null;kDraw();render()}
+function kScan(){camScan(code=>{const p=AP().find(x=>String(x.barcode||"").trim()===String(code).trim());if(p){kSheet(p.id)}else toast("Bu barkodlu ürün bulunamadı")})}
 
 /* ---------- Kasa ---------- */
 function kasa(){
@@ -1370,12 +1425,11 @@ function kasa(){
       const lv=stk<=0?"out":(num(p.min)&&stk<=num(p.min))?"low":"ok";
       const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
       return `<div class="spk-c${inc?" inc":""}${lv==="out"?" out":""}">
-        <button type="button" class="spk-tap" onclick="addCart('${p.id}')" aria-label="${esc(p.name)} sepete ekle">
+        <button type="button" class="spk-tap" onclick="kSheet('${p.id}')" aria-label="${esc(p.name)}: adet seç">
           <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}" title="Stok">${lv==="out"?"Yok":fmtN(stk)}</i></span>
           <span class="spk-n">${esc(p.name)}</span>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}
           <b class="spk-p">${fmt(num(p.price))}</b>
         </button>
-        ${inc?`<div class="spk-step"><button type="button" aria-label="Bir azalt" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="Bir artır" onclick="addCart('${p.id}')">+</button></div>`:""}
       </div>`}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
   </div></div>
   <div><div class="card"><h2>Sepet${cart.length?` <span class="foot" style="font-weight:400">· ${cart.length} çeşit ürün</span>`:""}</h2>
