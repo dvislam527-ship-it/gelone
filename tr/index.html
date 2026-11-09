@@ -868,27 +868,27 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .spk-cats button{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
 .spk-cats button small{opacity:.6;font-weight:600;margin-left:2px}
 .spk-cats button.on{background:var(--c-satis,#FF8A3D);border-color:transparent;color:var(--c-satis-ink,#2A1400)}
-.spk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
-@media (min-width:620px){.spk-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
-.spk-c{position:relative;display:flex;flex-direction:column;border-radius:18px;background:var(--panel2);border:2px solid transparent;overflow:hidden;min-width:0}
+.spk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (min-width:620px){.spk-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+.spk-c{position:relative;display:flex;flex-direction:column;border-radius:14px;background:var(--panel2);border:2px solid transparent;overflow:hidden;min-width:0}
 .spk-c.inc{border-color:var(--c-satis,#FF8A3D)}
 .spk-c.out{opacity:.5}
-.spk-tap{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:0 0 10px;min-width:0}
+.spk-tap{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:0 0 8px;min-width:0}
 .spk-tap:focus-visible{outline:3px solid var(--acc);outline-offset:-3px;border-radius:16px}
-.spk-img{position:relative;display:block;aspect-ratio:4/3;background:var(--panel);margin-bottom:6px}
+.spk-img{position:relative;display:block;aspect-ratio:5/4;background:var(--panel);margin-bottom:4px}
 .spk-img img{width:100%;height:100%;object-fit:cover;display:block}
-.spk-ini{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:30px;font-weight:900;text-transform:uppercase}
-.spk-q{position:absolute;top:8px;left:8px;min-width:30px;height:30px;padding:0 8px;border-radius:15px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-style:normal;font-weight:900;font-size:15px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.spk-st{position:absolute;bottom:6px;right:6px;font-style:normal;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(15,20,25,.72);color:#fff;font-variant-numeric:tabular-nums}
+.spk-ini{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:20px;font-weight:900;text-transform:uppercase}
+.spk-q{position:absolute;top:5px;left:5px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-style:normal;font-weight:900;font-size:13px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.spk-st{position:absolute;bottom:4px;right:4px;font-style:normal;font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:999px;background:rgba(15,20,25,.72);color:#fff;font-variant-numeric:tabular-nums}
 .spk-st.low{background:#FFD23F;color:#2A2100}
 .spk-st.out{background:#FF5C8A;color:#2B0612}
-.spk-n{padding:0 10px;font-weight:800;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
-.spk-sp{padding:0 10px;color:var(--mute);font-size:12px;line-height:1.3;overflow-wrap:anywhere}
-.spk-p{padding:2px 10px 0;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
-.spk-step{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 8px 8px}
-.spk-step button{width:44px;height:38px;border:0;border-radius:12px;background:var(--panel);color:var(--ink);font-size:22px;font-weight:800;cursor:pointer;display:grid;place-items:center}
+.spk-n{padding:0 7px;font-weight:800;font-size:12.5px;line-height:1.25;overflow-wrap:anywhere}
+.spk-sp{padding:0 7px;color:var(--mute);font-size:10.5px;line-height:1.3;overflow-wrap:anywhere}
+.spk-p{padding:1px 7px 0;font-size:14px;font-weight:900;font-variant-numeric:tabular-nums}
+.spk-step{display:flex;align-items:center;justify-content:space-between;gap:2px;padding:0 5px 6px}
+.spk-step button{width:32px;height:32px;border:0;border-radius:10px;background:var(--panel);color:var(--ink);font-size:19px;font-weight:800;cursor:pointer;display:grid;place-items:center}
 .spk-step button:last-child{background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
-.spk-step b{flex:1;text-align:center;font-size:17px;font-variant-numeric:tabular-nums}
+.spk-step b{flex:1;text-align:center;font-size:14px;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1295,7 +1295,8 @@ function panel(){
 }
 
 function quickBuy(pid){pIn(pid)}
-let kCat="";
+let kCat="",kSoldC=null,kSoldK="";
+function kSold(){const k=S.sales.length+"|"+today();if(kSoldC&&kSoldK===k)return kSoldC;const d=new Date(Date.now()-90*864e5).toISOString().slice(0,10),m={},a={};S.sales.forEach(x=>{const q=num(x.qty);a[x.pid]=(a[x.pid]||0)+q;if(String(x.date||"")>=d)m[x.pid]=(m[x.pid]||0)+q});const r=Object.keys(m).length?m:a;kSoldC=r;kSoldK=k;return r}
 function kScan(){camScan(code=>{const p=AP().find(x=>String(x.barcode||"").trim()===String(code).trim());if(p){addCart(p.id);toast(p.name+" sepete eklendi")}else toast("Bu barkodlu ürün bulunamadı")})}
 
 /* ---------- Kasa ---------- */
@@ -1317,7 +1318,7 @@ function kasa(){
     ${(()=>{const cs=[...new Set(AP().map(p=>p.cat||"").filter(Boolean))];if(cs.length<2)return "";
       const n=k=>AP().filter(p=>(p.cat||"")===k).length;
       return `<div class="spk-cats">${[["","Tümü",AP().length],...cs.map(k=>[k,k,n(k)])].map(([k,l,c])=>`<button type="button" class="${kCat===k?"on":""}" onclick="kCat=${JSON.stringify(k).replace(/"/g,"&quot;")};render()">${esc(l)} <small>${c}</small></button>`).join("")}</div>`})()}
-    <div class="spk-grid">${list.filter(p=>!kCat||(p.cat||"")===kCat).map((p,ix)=>({p,ix,s:num(st[p.id])})).sort((a,b)=>((a.s<=0)-(b.s<=0))||a.ix-b.ix).map(({p,s:stk})=>{
+    <div class="spk-grid">${list.filter(p=>!kCat||(p.cat||"")===kCat).map((p,ix)=>({p,ix,s:num(st[p.id]),n:kSold()[p.id]||0})).sort((a,b)=>((a.s<=0)-(b.s<=0))||(b.n-a.n)||a.ix-b.ix).map(({p,s:stk})=>{
       const inc=cart.find(c=>c.pid===p.id),col=p.color||PCOL[[...(p.name||"")].length%PCOL.length];
       const lv=stk<=0?"out":(num(p.min)&&stk<=num(p.min))?"low":"ok";
       const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
