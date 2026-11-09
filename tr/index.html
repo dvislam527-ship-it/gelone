@@ -906,6 +906,25 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .spk-step button{width:26px;height:28px;border-radius:8px;font-size:17px}
 .spk-step b{font-size:12.5px}
 }
+
+/* ---- Satış kartları: yuvarlak resim, büyük -/+ ---- */
+.spk-img{width:calc(100% - 16px);margin:8px auto 6px!important;aspect-ratio:1/1!important;border-radius:50%;overflow:visible}
+.spk-img img,.spk-ini{border-radius:50%}
+.spk-img img{position:absolute;inset:0}
+.spk-st{left:50%!important;right:auto!important;bottom:-6px!important;transform:translateX(-50%)}
+.spk-q{top:-4px!important;left:-4px!important}
+.spk-tap{gap:3px}
+.spk-n{margin-top:4px}
+.spk-n,.spk-sp,.spk-p{text-align:center}
+.spk-step button{width:36px!important;height:36px!important;border-radius:50%!important;font-size:21px!important}
+.spk-step{padding:0 4px 6px!important}
+@media (max-width:619px){.spk-img{width:calc(100% - 12px);margin:6px auto 5px!important}.spk-step button{width:30px!important;height:30px!important;font-size:19px!important}.spk-step{padding:0 2px 5px!important;gap:0!important}.spk-step b{font-size:13px}}
+
+@media (max-width:619px){
+.spk-step{gap:4px!important;padding:0 4px 5px!important}
+.spk-step b{display:none}
+.spk-step button{flex:1;width:auto!important;height:34px!important;border-radius:12px!important;font-size:22px!important}
+}
 </style>
 </head>
 <body>
@@ -1341,7 +1360,7 @@ function kasa(){
       const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
       return `<div class="spk-c${inc?" inc":""}${lv==="out"?" out":""}">
         <button type="button" class="spk-tap" onclick="addCart('${p.id}')" aria-label="${esc(p.name)} sepete ekle">
-          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}">${lv==="out"?"Yok":fmtN(stk)+" "+esc(unitOf(p))}</i></span>
+          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}" title="Stok">${lv==="out"?"Yok":fmtN(stk)}</i></span>
           <span class="spk-n">${esc(p.name)}</span>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}
           <b class="spk-p">${fmt(num(p.price))}</b>
         </button>
