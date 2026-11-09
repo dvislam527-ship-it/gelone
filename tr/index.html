@@ -1034,6 +1034,22 @@ button,a,input,select,label,.spk-mid{touch-action:manipulation;-webkit-tap-highl
 .gl-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .gl-bar i{display:block;height:100%;background:var(--c-rapor,#FF5C8A);border-radius:4px}
 .gl-lst{max-height:none}
+
+/* ---- Hesaplaşma ayrıntı pencereleri ---- */
+.hs-s{margin:16px 0 8px;font-size:15px;font-weight:800}
+.hs-t{display:flex;flex-direction:column;border-radius:14px;background:var(--panel2);overflow:hidden}
+.hs-r{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.hs-t .hs-r:has(span:nth-child(4)){grid-template-columns:minmax(0,1fr) auto auto auto}
+.hs-r span:not(:first-child){text-align:right;white-space:nowrap}
+.hs-r span:first-child{overflow-wrap:anywhere}
+.hs-h{border-top:0;font-size:11.5px;font-weight:800;color:var(--mute);text-transform:uppercase;letter-spacing:.03em}
+.hs-sum{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--panel2)}
+.hs-l{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14.5px;font-variant-numeric:tabular-nums}
+.hs-l.neg b{color:var(--bad)}
+.hs-l.sub{border-top:1px dashed var(--line);font-weight:700}
+.hs-l.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:9px;font-size:16px}
+.hs-l.tot b{font-weight:900}
+.stat.hero.statbtn{cursor:pointer}
 </style>
 </head>
 <body>
@@ -3099,6 +3115,41 @@ function xlsCard(){
   <div class="row">${[["boss",P_.boss],...P_.shares.map(x=>[x.id,x.name])].map(([id,n])=>`<button class="btn g s" style="flex:1" onclick="xlsExport('${id}')">${esc(n)}</button>`).join("")}</div></div>`;
 }
 let hMon="all";
+function hsDetail(kind){
+  const pred=hMon==="all"?(d=>!!d):(d=>!!d&&String(d).startsWith(hMon));
+  const L=ledger(hMon==="all"?null:(d=>d&&d.startsWith(hMon))),st=L.st,avg=avgMap();
+  const per=hMon==="all"?"Tüm zamanlar":MONTHL[+hMon.slice(5)-1]+" "+hMon.slice(0,4);
+  const SL=S.sales.filter(x=>pred(x.date));
+  const byP={};SL.forEach(x=>{const o=byP[x.pid]=byP[x.pid]||{q:0,r:0,c:0};o.q+=num(x.qty);o.r+=num(x.qty)*num(x.price);o.c+=num(x.qty)*lc(x,avg)});
+  const rows=Object.entries(byP).map(([pid,o])=>({pid,q:r2(o.q),r:r2(o.r),c:r2(o.c),k:r2(o.r-o.c)}));
+  const nm=pid=>esc(pname(pid));
+  const tbl=(head,list,cells)=>list.length?`<div class="hs-t" role="table"><div class="hs-r hs-h" role="row">${head.map(h=>`<span role="columnheader">${h}</span>`).join("")}</div>${list.map(x=>`<div class="hs-r" role="row">${cells(x).map(c=>`<span role="cell">${c}</span>`).join("")}</div>`).join("")}</div>`:`<div class="empty">Bu dönemde satış yok.</div>`;
+  const line=(l,v,cls="")=>`<div class="hs-l ${cls}"><span>${l}</span><b>${v}</b></div>`;
+  let title="",total="",body="";
+  if(kind==="satis"){
+    title="Satış";total=fmt(st.ciro);
+    const R=S.receipts.filter(r=>pred(r.date)).map(r=>({r,t:r2(S.sales.filter(x=>x.rid===r.id).reduce((a,x)=>a+num(x.qty)*num(x.price),0)-num(r.disc))})).sort((a,b)=>String(b.r.date+(b.r.time||"")).localeCompare(String(a.r.date+(a.r.time||""))));
+    const loose=SL.filter(x=>!x.rid);
+    body=`<h3 class="hs-s">Ürünlere göre</h3>${tbl(["Ürün","Adet","Tutar"],rows.sort((a,b)=>b.r-a.r),x=>[nm(x.pid),fmtN(x.q),fmt(x.r)])}
+      <div class="hs-sum">${line("Ürün satışları",fmt(r2(rows.reduce((a,x)=>a+x.r,0))))}${st.disc?line("İndirimler","−"+fmt(r2(st.disc)),"neg"):""}${st.svc?line("Tamir ücretleri","+"+fmt(r2(st.svc))):""}${line("Satış toplamı",fmt(st.ciro),"tot")}</div>
+      <h3 class="hs-s">Fişler (${R.length+loose.length})</h3>
+      ${R.length||loose.length?`<div class="lst">${R.map(({r,t})=>`<div class="li" onclick="closeM();showR('${r.id}')"><span>${esc(rNo(r))} · ${esc(cname(r.cid)||"Perakende")}<small>${fD(r.date)}${r.time?" "+esc(r.time):""}</small></span><span class="side"><b>${fmt(t)}</b></span></div>`).join("")}${loose.map(x=>`<div class="li"><span>${nm(x.pid)} × ${fmtN(x.qty)}<small>${fD(x.date)}${x.cid?" · "+esc(cname(x.cid)):""}</small></span><span class="side"><b>${fmt(r2(num(x.qty)*num(x.price)))}</b></span></div>`).join("")}</div>`:`<div class="empty">Bu dönemde fiş yok.</div>`}`;
+  }else if(kind==="maliyet"){
+    title="Mal parası (maliyet)";total=fmt(L.cogs);
+    body=`<p class="foot" style="margin:0 0 10px">Satılan ürünlerin alış maliyeti: adet × satış anındaki birim maliyet.</p>${tbl(["Ürün","Adet","Birim","Maliyet"],rows.sort((a,b)=>b.c-a.c),x=>[nm(x.pid),fmtN(x.q),x.q?fmt(r2(x.c/x.q)):"—",fmt(x.c)])}<div class="hs-sum">${line("Toplam maliyet",fmt(L.cogs),"tot")}</div>`;
+  }else if(kind==="kar"){
+    title="Toplam kâr";total=fmt(L.prof);
+    body=`<p class="foot" style="margin:0 0 10px">Her üründen kâr: satış tutarı − alış maliyeti.</p>${tbl(["Ürün","Adet","Kâr","Oran"],rows.sort((a,b)=>b.k-a.k),x=>[nm(x.pid),fmtN(x.q),`<b class="${x.k<0?"neg":"pos"}">${fmt(x.k)}</b>`,x.r?"%"+fmtN(Math.round(x.k/x.r*100)):"—"])}
+      <div class="hs-sum">${line("Ürünlerden kâr",fmt(r2(rows.reduce((a,x)=>a+x.k,0))))}${st.disc?line("İndirimler","−"+fmt(r2(st.disc)),"neg"):""}${st.svc?line("Tamir ücretleri","+"+fmt(r2(st.svc))):""}${line("Toplam kâr",fmt(L.prof),"tot")}</div>`;
+  }else{
+    title="Net kâr";total=fmt(L.net);
+    body=`<div class="hs-sum">${line("Satış",fmt(st.ciro))}${line("− Mal parası (maliyet)","−"+fmt(L.cogs),"neg")}${line("= Toplam kâr",fmt(L.prof),"sub")}${line("− Giderler","−"+fmt(L.gid),"neg")}${line("= Net kâr (bölünecek)",fmt(L.net),"tot")}</div>
+      <h3 class="hs-s">Paylaşım</h3><div class="hs-sum">${[{n:L.boss.name,p:L.boss.pct,v:L.boss.share},...L.ps.map(o=>({n:o.name,p:o.pct,v:o.share}))].map(o=>line(`${esc(DV(o.n))} · %${fmtN(o.p)}`,fmt(o.v))).join("")}</div>
+      <div class="row" style="gap:8px;margin-top:10px"><button class="btn g s" style="flex:1" onclick="hsDetail('kar')">Kâr ayrıntısı</button><button class="btn g s" style="flex:1" onclick="gidList()">Giderler</button></div>`;
+  }
+  $("#sheet").innerHTML=`<div class="gl"><div class="gl-hd"><div><h2 style="margin:0">${title}</h2><small class="foot" style="margin:0">${per}</small></div><b class="gl-tot${kind==="net"&&L.net<0?" neg":""}">${total}</b></div>${body}<button class="btn g" style="width:100%;margin-top:12px" onclick="closeM()">Kapat</button></div>`;
+  $("#modal").classList.add("on");
+}
 function gidList(){
   const rows=S.expenses.filter(x=>hMon==="all"||String(x.date||"").startsWith(hMon)).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.time||"").localeCompare(String(a.time||"")));
   const tot=r2(rows.reduce((a,x)=>a+num(x.amount),0));
@@ -3124,11 +3175,11 @@ function hesap(){
    <button class="btn g" style="width:100%" onclick="handNew('${o.id}')">${o.me?"Payımı aldım":"Para verdim"}</button></div>`}`;
   return `${debtCard()}<div class="seg" style="display:flex;margin-bottom:12px;overflow-x:auto"><button style="flex:1" class="${hMon==="all"?"on":""}" onclick="hMon='all';render()">Tümü</button>${months.slice(0,4).map(m=>`<button style="flex:1;white-space:nowrap" class="${hMon===m?"on":""}" onclick="hMon='${m}';render()">${MONTHL[+m.slice(5)-1]}</button>`).join("")}</div>
   <div class="grid">
-   <div class="stat"><small>Satış</small><b>${fmt(L.st.ciro)}</b></div>
-   <div class="stat"><small>Mal parası (maliyet)</small><b>${fmt(L.cogs)}</b></div>
-   <div class="stat"><small>Toplam kâr</small><b>${fmt(L.prof)}</b></div>
+   <button type="button" class="stat statbtn" onclick="hsDetail('satis')" aria-label="Satışların ayrıntısını aç"><small>Satış <span class="stat-more">Ayrıntı ›</span></small><b>${fmt(L.st.ciro)}</b></button>
+   <button type="button" class="stat statbtn" onclick="hsDetail('maliyet')" aria-label="Maliyetin ayrıntısını aç"><small>Mal parası (maliyet) <span class="stat-more">›</span></small><b>${fmt(L.cogs)}</b></button>
+   <button type="button" class="stat statbtn" onclick="hsDetail('kar')" aria-label="Kârın ayrıntısını aç"><small>Toplam kâr <span class="stat-more">Ayrıntı ›</span></small><b>${fmt(L.prof)}</b></button>
    <button type="button" class="stat statbtn" onclick="gidList()" aria-label="Giderlerin listesini aç"><small>Giderler <span class="stat-more">Listeyi gör ›</span></small><b class="neg">−${fmt(L.gid)}</b></button>
-   <div class="stat hero" style="grid-column:1/-1"><small>Net kâr (bölünecek)</small><b class="${L.net<0?"neg":""}">${fmt(L.net)}</b><div class="sub2">${[[PART().boss,bossPct()],...PART().shares.map(x=>[x.name,x.pct])].map(([n,p])=>`<span>${esc(n)} %${fmtN(p)}</span>`).join("")}</div></div>
+   <div class="stat hero statbtn" role="button" tabindex="0" style="grid-column:1/-1" onclick="hsDetail('net')" onkeydown="if(event.key==='Enter')hsDetail('net')" aria-label="Net kârın hesabını aç"><small>Net kâr (bölünecek) <span class="stat-more">Hesap ›</span></small><b class="${L.net<0?"neg":""}">${fmt(L.net)}</b><div class="sub2">${[[PART().boss,bossPct()],...PART().shares.map(x=>[x.name,x.pct])].map(([n,p])=>`<span>${esc(n)} %${fmtN(p)}</span>`).join("")}</div></div>
   </div>
   ${card(L.boss,1)}${L.ps.map(o=>card(o)).join("")}
   ${hMon==="all"?`<div class="card"><h2>Kontrol · Para nereye gitti</h2><dl class="kv"><dt>Elimdeki nakit</dt><dd>${fmt(cash)}<br><small class="foot">${(c=>fmtN(c.usd)+" $ + "+somF(c.som))(cashMoves())}</small></dd><dt>Gider</dt><dd class="neg">${fmt(L.gid)}</dd><dt>Yeşil’e teslim edilen</dt><dd class="pos">${fmt(L.boss.paid)}</dd>${(up=>up>0.004?`<dt>Verdiğim pay</dt><dd class="pos">${fmt(up)}</dd>`:"")(L.ps.reduce((a,o)=>a+o.paid,0))}<dt>Müşterilerdeki veresiye</dt><dd>${fmt(debt)}</dd><dt>Kart / havale ile gelen</dt><dd>${fmt(cashMoves().nc.reduce((a,e)=>a+e.a,0))}</dd></dl><div class="foot" style="margin-top:8px">Toplanan nakit = Eldeki nakit + gider + Yeşil’e teslim edilen. Teslim edilen para kaybolmadı, Yeşil’in borcundan düştü.</div></div>`:`<div class="foot" style="margin-bottom:10px">Ay seçilince o aydaki satış ve o ay verilen para gösterilir. Genel bakiye için «Tümü»nü seçin.</div>`}
