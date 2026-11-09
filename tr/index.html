@@ -969,6 +969,39 @@ body[data-tab] .bar::after{height:4px!important;opacity:1!important}
 .ksh-ok{flex:1;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
 .ksh-ok:disabled{opacity:.45;cursor:not-allowed}
 body.ksh-open{overflow:hidden}
+
+/* ---- Satış: tek sütun liste, solda −, sağda + ---- */
+.spk-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.spk-r{display:flex;align-items:stretch;gap:0;border-radius:16px;background:var(--panel2);border:2px solid transparent;overflow:hidden;min-height:72px}
+.spk-r.inc{border-color:var(--c-satis,#FF8A3D)}
+.spk-r.out .spk-mid{opacity:.5}
+.spk-mn,.spk-pl{flex:none;width:58px;border:0;font-size:32px;font-weight:800;line-height:1;cursor:pointer;display:grid;place-items:center;color:var(--ink);background:var(--panel)}
+.spk-pl{background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400)}
+.spk-mn:disabled{color:var(--mute);opacity:.35;cursor:default}
+.spk-mn:not(:disabled):active,.spk-pl:active{filter:brightness(.9)}
+.spk-mid{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer}
+.spk-mid:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
+.spk-r .spk-img{position:relative;flex:none;width:48px!important;height:48px;aspect-ratio:auto!important;margin:0!important;border-radius:50%;overflow:hidden;background:var(--panel)}
+.spk-r .spk-img img{position:static;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.spk-r .spk-ini{position:absolute;inset:0;font-size:17px;border-radius:50%}
+.spk-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.spk-r .spk-n{padding:0;margin:0;text-align:left;font-size:15px;font-weight:800;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.spk-r .spk-sp{display:block;padding:0;text-align:left;font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spk-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.spk-r .spk-p{padding:0;text-align:left;font-size:15px;font-weight:900}
+.spk-r .spk-st{position:static!important;transform:none!important;font-style:normal;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--panel);color:var(--mute);max-width:none}
+.spk-r .spk-st.low{background:#FFD23F;color:#2A2100}
+.spk-r .spk-st.out{background:#FF5C8A;color:#2B0612}
+.spk-r .spk-q{position:static!important;flex:none;min-width:38px;height:38px;padding:0 8px;border-radius:19px;background:var(--c-satis,#FF8A3D);color:var(--c-satis-ink,#2A1400);font-weight:900;font-size:18px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+
+.card.spk{padding:12px 10px}
+.spk-mn,.spk-pl{width:52px;font-size:30px}
+.spk-mid{gap:9px;padding:8px 8px}
+.spk-r .spk-img{width:46px!important;height:46px;overflow:visible}
+.spk-r .spk-img img,.spk-r .spk-ini{border-radius:50%}
+.spk-r .spk-ini{overflow:hidden}
+.spk-r .spk-q{position:absolute!important;top:-6px;right:-8px;left:auto!important;min-width:24px;height:24px;padding:0 6px;border-radius:12px;font-size:13px;box-shadow:0 0 0 2px var(--panel2)}
+.spk-r .spk-n{-webkit-line-clamp:2}
 </style>
 </head>
 <body>
@@ -1420,16 +1453,17 @@ function kasa(){
     ${(()=>{const cs=[...new Set(AP().map(p=>p.cat||"").filter(Boolean))];if(cs.length<2)return "";
       const n=k=>AP().filter(p=>(p.cat||"")===k).length;
       return `<div class="spk-cats">${[["","Tümü",AP().length],...cs.map(k=>[k,k,n(k)])].map(([k,l,c])=>`<button type="button" class="${kCat===k?"on":""}" onclick="kCat=${JSON.stringify(k).replace(/"/g,"&quot;")};render()">${esc(l)} <small>${c}</small></button>`).join("")}</div>`})()}
-    <div class="spk-grid">${list.filter(p=>!kCat||(p.cat||"")===kCat).map((p,ix)=>({p,ix,s:num(st[p.id]),n:kSold()[p.id]||0})).sort((a,b)=>((a.s<=0)-(b.s<=0))||(b.n-a.n)||a.ix-b.ix).map(({p,s:stk})=>{
+    <div class="spk-list">${list.filter(p=>!kCat||(p.cat||"")===kCat).map((p,ix)=>({p,ix,s:num(st[p.id]),n:kSold()[p.id]||0})).sort((a,b)=>((a.s<=0)-(b.s<=0))||(b.n-a.n)||a.ix-b.ix).map(({p,s:stk})=>{
       const inc=cart.find(c=>c.pid===p.id),col=p.color||PCOL[[...(p.name||"")].length%PCOL.length];
       const lv=stk<=0?"out":(num(p.min)&&stk<=num(p.min))?"low":"ok";
       const img=p.img?`<img src="${esc(bsrc(p.img))}" alt="" loading="lazy">`:`<span class="spk-ini" style="background:${col}">${esc([...(p.name||"").trim()].slice(0,2).join("")||"?")}</span>`;
-      return `<div class="spk-c${inc?" inc":""}${lv==="out"?" out":""}">
-        <button type="button" class="spk-tap" onclick="kSheet('${p.id}')" aria-label="${esc(p.name)}: adet seç">
-          <span class="spk-img">${img}${inc?`<i class="spk-q">${fmtN(inc.qty)}</i>`:""}<i class="spk-st ${lv}" title="Stok">${lv==="out"?"Yok":fmtN(stk)}</i></span>
-          <span class="spk-n">${esc(p.name)}</span>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}
-          <b class="spk-p">${fmt(num(p.price))}</b>
+      return `<div class="spk-r${inc?" inc":""}${lv==="out"?" out":""}">
+        <button type="button" class="spk-mn" aria-label="${esc(p.name)}: bir azalt" onclick="cDec('${p.id}')" ${inc?"":"disabled"}>−</button>
+        <button type="button" class="spk-mid" onclick="kSheet('${p.id}')" aria-label="${esc(p.name)}: adet yaz">
+          <span class="spk-img">${img}${inc?`<i class="spk-q" aria-label="Sepette ${fmtN(inc.qty)}">${fmtN(inc.qty)}</i>`:""}</span>
+          <span class="spk-info"><b class="spk-n">${esc(p.name)}</b>${spec(p)?`<small class="spk-sp">${esc(spec(p))}</small>`:""}<span class="spk-meta"><b class="spk-p">${fmt(num(p.price))}</b><i class="spk-st ${lv}">${lv==="out"?"Stokta yok":"Stok "+fmtN(stk)}</i></span></span>
         </button>
+        <button type="button" class="spk-pl" aria-label="${esc(p.name)}: bir artır" onclick="addCart('${p.id}')" ${lv==="out"&&!inc?"":""}>+</button>
       </div>`}).join("")||`<div class="empty">Uyan ürün yok.</div>`}</div>
   </div></div>
   <div><div class="card"><h2>Sepet${cart.length?` <span class="foot" style="font-weight:400">· ${cart.length} çeşit ürün</span>`:""}</h2>
