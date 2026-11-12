@@ -3549,14 +3549,14 @@ const TEAM=window.TEAM=(()=>{
   function start(){
     if(!active||started)return;started=true;
     run();
-    poll=setInterval(async()=>{if(document.hidden||busy)return;try{const x=await getT();if(x&&x.t!==rT)run();else if(err)run()}catch(e){}},4000);
+    poll=setInterval(async()=>{if(document.hidden||busy)return;photos();try{const x=await getT();if(x&&x.t!==rT)run();else if(err)run()}catch(e){}},4000);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)run()});
     window.addEventListener("online",()=>run());
   }
   function box(){
     return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
-  return {active,run,dirty,start,box,msg};
+  return {active,run,dirty,start,box,msg,photos};
 })();
 
 window.addEventListener("error",e=>{try{const m=document.getElementById("msg");if(m){m.dataset.err=1;m.textContent="خاتالىق: "+(e.message||"")+" @"+(e.lineno||"")}}catch(x){}});
@@ -3565,7 +3565,7 @@ window.addEventListener("unhandledrejection",e=>{try{const m=document.getElement
 {const st=document.createElement("style");st.textContent=FISCSS;document.head.appendChild(st)}
 window.__AMBUSE("assets").then(async a=>{AS=a;
   try{const e=document.getElementById("seedphotos");if(e&&a.load&&localStorage.getItem(KEY+"-seedph")!=="20261108"){const o=JSON.parse(e.textContent),m={};for(const k in o)if(!window.__BU[k])m[k]=o[k];if(Object.keys(m).length)await a.load(m);localStorage.setItem(KEY+"-seedph","20261108")}}catch(x){}
-  render()}).catch(()=>{});
+  render();try{if(window.TEAM&&TEAM.active)TEAM.photos()}catch(x){}}).catch(()=>{});
 try{adopt(JSON.parse(localStorage.getItem(KEY)))}catch(e){}
 try{var _sd=document.getElementById("seeddata");if(_sd&&localStorage.getItem(KEY+"-seed")!=="20261106-cloud"){adopt(JSON.parse(_sd.textContent));localStorage.setItem(KEY+"-seed","20261106-cloud");try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}}catch(e){}
 applyTheme();
