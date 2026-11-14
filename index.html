@@ -3558,7 +3558,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.10 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
