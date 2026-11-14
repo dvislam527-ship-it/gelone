@@ -813,6 +813,7 @@ input:focus,select:focus,textarea:focus{
 
 /* ---- üst çubuk: cam dokusu ---- */
 .bar{border-bottom:1px solid rgba(255,255,255,.05)}
+small.itl{display:block;margin-top:3px;line-height:1.6;color:var(--mute);font-size:12px}
 html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .bar{grid-template-columns:auto minmax(0,1fr) auto;gap:6px}
 .bar .pill{justify-self:center}
@@ -2096,7 +2097,7 @@ function detail(d){
   ${cGallery(d)}
   ${custExtra(d,debt)}
   <div class="sec" style="border-radius:12px 12px 0 0;margin-top:4px"><span>ھېسابات خاتىرىسى</span><span></span></div>
-  ${rows.length?`<div class="lst" style="border-radius:0 0 16px 16px">${rows.map(r=>`<div class="li" ${r.rid?`onclick="showR('${r.rid}')"`:r.pay?`onclick="showP('${r.pay}')"`:r.sv?`onclick="svcShow('${r.sv}')"`:""}><span>${esc(r.t)}<small>${fD(r.date)}${r.rid?(r.bal>0.004?" · قالدۇق نېسى "+fmtN(r.bal):r.a-r.p>0.004?" · نېسى تۆلەندى ✓":""):r.a>0&&r.a-r.p>0.004?" · نېسى "+fmtN(r.a-r.p):""}</small></span><span class="side"><b class="${r.a>0?"":"pos"}">${r.a>0?fmt(r.a):r.a<0?"-"+fmt(-r.a):"+"+fmt(r.p)}</b>${r.rid||r.pay||r.sid?`<button class="x e" title="چېسلانى تۈزىتىش" aria-label="چېسلانى تۈزىتىش" onclick="event.stopPropagation();editDate('${r.rid?"r":r.pay?"p":"s"}','${r.rid||r.pay||r.sid}')">✎</button>`:""}${r.pay?`<button class="x" title="ئۆچۈرۈش" onclick="event.stopPropagation();delPay('${r.pay}')">✕</button>`:""}</span></div>`).join("")}</div>`:`<div class="empty">تېخى خاتىرە يوق.</div>`}`;
+  ${rows.length?`<div class="lst" style="border-radius:0 0 16px 16px">${rows.map(r=>`<div class="li" ${r.rid?`onclick="showR('${r.rid}')"`:r.pay?`onclick="showP('${r.pay}')"`:r.sv?`onclick="svcShow('${r.sv}')"`:""}><span>${esc(r.t)}<small>${fD(r.date)}${r.rid?(r.bal>0.004?" · قالدۇق نېسى "+fmtN(r.bal):r.a-r.p>0.004?" · نېسى تۆلەندى ✓":""):r.a>0&&r.a-r.p>0.004?" · نېسى "+fmtN(r.a-r.p):""}</small>${r.rid?`<small class="itl">${S.sales.filter(z=>z.rid===r.rid).map(z=>esc(pname(z.pid))+" · "+fmtN(z.qty)+" × "+fmt(z.price)).join("<br>")}</small>`:""}</span><span class="side"><b class="${r.a>0?"":"pos"}">${r.a>0?fmt(r.a):r.a<0?"-"+fmt(-r.a):"+"+fmt(r.p)}</b>${r.rid||r.pay||r.sid?`<button class="x e" title="چېسلانى تۈزىتىش" aria-label="چېسلانى تۈزىتىش" onclick="event.stopPropagation();editDate('${r.rid?"r":r.pay?"p":"s"}','${r.rid||r.pay||r.sid}')">✎</button>`:""}${r.pay?`<button class="x" title="ئۆچۈرۈش" onclick="event.stopPropagation();delPay('${r.pay}')">✕</button>`:""}</span></div>`).join("")}</div>`:`<div class="empty">تېخى خاتىرە يوق.</div>`}`;
 }
 /* مۇشتەرى راپورتى: نېمە ئالغان (تاۋار-تاۋار) ۋە نېمە بەرگەن (تۆلەم) */
 function custData(id){
@@ -2105,6 +2106,7 @@ function custData(id){
   const items={};
   S.sales.forEach(s=>{if(!isC(s))return;const k=s.pid;(items[k]=items[k]||{qty:0,amt:0});items[k].qty=r2(items[k].qty+num(s.qty));items[k].amt=r2(items[k].amt+num(s.qty)*num(s.price))});
   const svc=S.services.filter(x=>x.cid===id&&x.st>=3&&(num(x.fee)||num(x.paid)));
+  const lines=S.sales.filter(isC).map(s=>{const r=s.rid&&S.receipts.find(x=>x.id===s.rid);return {date:s.date||(r&&r.date)||"",no:r?rNo(r):"",name:pname(s.pid),qty:num(s.qty),price:num(s.price),amt:r2(num(s.qty)*num(s.price))}}).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   const itemRows=Object.entries(items).filter(([k,v])=>Math.abs(v.qty)>0.0001||Math.abs(v.amt)>0.004).sort((a,b)=>b[1].amt-a[1].amt);
   const bought=r2(itemRows.reduce((a,x)=>a+x[1].amt,0)+svc.reduce((a,x)=>a+num(x.fee),0));
   const pays=[...S.payments.filter(x=>x.cid===id).map(p=>({date:p.date,a:num(p.amount),t:"پۇل بەردى"+(p.no||(p.alloc||[]).length?" · "+payNo(p):"")})),
@@ -2112,28 +2114,28 @@ function custData(id){
     ...S.sales.filter(x=>isC(x)&&!x.rid&&x.paid!=null&&num(x.paid)>0).map(s=>({date:s.date,a:num(s.paid),t:pname(s.pid)+" ئۈچۈن تۆلىدى"})),
     ...svc.filter(x=>num(x.paid)).map(x=>({date:x.done,a:num(x.paid),t:"رېمونت #"+x.no+" تۆلىدى"}))].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
   const paid=r2(pays.reduce((a,x)=>a+x.a,0)),debt=(cust().find(x=>x.c.id===id)||{}).debt||0;
-  return {d,itemRows,svc,bought,pays,paid,debt};
+  return {d,itemRows,svc,bought,pays,paid,debt,lines};
 }
 async function custXls(id){
   let X;try{X=await needXLSX()}catch(e){note("Excel قورالىنى يۈكلىگىلى بولمىدى. تور ئۇلىنىشىنى تەكشۈرۈپ قايتا سىناڭ.");return}
   const R=custData(id);if(!R)return;const {d,itemRows,svc,bought,pays,paid,debt}=R;
   const A=[[`${S.shop||""} — مۇشتەرى ھېساباتى`],["مۇشتەرى",d.name],["تېلېفون",d.phone||""],["چېسلا",fD(today())],[],
-    ["ئالغان تاۋارلار"],["تاۋار","سانى","سوممىسى ($)"],
-    ...itemRows.map(([k,v])=>[pname(k),r2(v.qty),r2(v.amt)]),
-    ...svc.map(x=>["رېمونت #"+x.no+" · "+svcItem(x),"",num(x.fee)]),
-    ["جەمئىي ئالغان","",bought],[],
-    ["بەرگەن پۇللىرى"],["چېسلا","ئىزاھات","سوممىسى ($)"],
-    ...pays.map(p=>[fD(p.date),p.t,r2(p.a)]),
-    ["جەمئىي بەرگەن","",paid],[],
-    [debt>0.004?"قالغان نېسى ($)":debt<-0.004?"ئالدىن تۆلىگەن ($)":"ھېساب تەڭ","",r2(Math.abs(debt))]];
-  const ws=X.utils.aoa_to_sheet(A);ws["!cols"]=[{wch:30},{wch:10},{wch:14}];
+    ["ئالغان تاۋارلار"],["چېسلا","تاۋار","سانى","باھاسى ($)","سوممىسى ($)"],
+    ...R.lines.map(z=>[fD(z.date),z.name+(z.no?" · "+z.no:""),r2(z.qty),r2(z.price),z.amt]),
+    ...svc.map(x=>[fD(x.done),"رېمونت #"+x.no+" · "+svcItem(x),"","",num(x.fee)]),
+    ["جەمئىي ئالغان","","","",bought],[],
+    ["بەرگەن پۇللىرى"],["چېسلا","ئىزاھات","","","سوممىسى ($)"],
+    ...pays.map(p=>[fD(p.date),p.t,"","",r2(p.a)]),
+    ["جەمئىي بەرگەن","","","",paid],[],
+    [debt>0.004?"قالغان نېسى ($)":debt<-0.004?"ئالدىن تۆلىگەن ($)":"ھېساب تەڭ","","","",r2(Math.abs(debt))]];
+  const ws=X.utils.aoa_to_sheet(A);ws["!cols"]=[{wch:14},{wch:34},{wch:10},{wch:12},{wch:14}];
   const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,"ھېسابات");
   const ok=await saveBin(`${(d.name||"mijoz").replace(/[^\p{L}\p{N}_-]+/gu,"_")}-hesabat-${today()}.xlsx`,X.write(wb,{bookType:"xlsx",type:"array"}),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   if(ok)toast("Excel چۈشۈرۈلدى");
 }
 function custReport(id){
   const R=custData(id);if(!R)return;const {d,itemRows,svc,bought,pays,paid,debt}=R;
-  const txt=[`${S.shop||"دۇكان"} · ${d.name} — ھېسابات راپورتى`,fD(today()),"-----","ئالغان تاۋارلار:",...itemRows.map(([k,v])=>`${pname(k)} — ${fmtN(v.qty)} دانە = ${fmtN(v.amt)}`),...svc.map(x=>`رېمونت #${x.no} = ${fmtN(num(x.fee))}`),`جەمئىي ئالغان: ${fmtN(bought)} ${S.cur}`,"-----","بەرگەن پۇل:",...pays.map(p=>`${fD(p.date)}: ${fmtN(p.a)}`),`جەمئىي بەرگەن: ${fmtN(paid)} ${S.cur}`,"-----",debt>0.004?`قالغان نېسى: ${fmtN(debt)} ${S.cur}`:debt<-0.004?`ئالدىن تۆلىگەن: ${fmtN(-debt)} ${S.cur}`:"ھېساب تەڭ (قەرز يوق)"].join("\n");
+  const txt=[`${S.shop||"دۇكان"} · ${d.name} — ھېسابات راپورتى`,fD(today()),"-----","ئالغان تاۋارلار:",...R.lines.map(z=>`${fD(z.date)}: ${z.name} — ${fmtN(z.qty)} × ${fmtN(z.price)} = ${fmtN(z.amt)}`),...svc.map(x=>`رېمونت #${x.no} = ${fmtN(num(x.fee))}`),`جەمئىي ئالغان: ${fmtN(bought)} ${S.cur}`,"-----","بەرگەن پۇل:",...pays.map(p=>`${fD(p.date)}: ${fmtN(p.a)}`),`جەمئىي بەرگەن: ${fmtN(paid)} ${S.cur}`,"-----",debt>0.004?`قالغان نېسى: ${fmtN(debt)} ${S.cur}`:debt<-0.004?`ئالدىن تۆلىگەن: ${fmtN(-debt)} ${S.cur}`:"ھېساب تەڭ (قەرز يوق)"].join("\n");
   $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("chart",18)}</span><div><b>${esc(d.name)} — ھېسابات راپورتى</b><small>${d.phone?esc(d.phone)+" · ":""}${fD(today())}</small></div></div>
   <div class="grid" style="margin:12px 0">
    <div class="stat"><small>جەمئىي ئالغان</small><b>${fmt(bought)}</b></div>
@@ -2142,6 +2144,8 @@ function custReport(id){
   </div>
   <div class="sec" style="border-radius:12px 12px 0 0"><span>ئالغان تاۋارلار</span><span></span></div>
   <div class="lst" style="border-radius:0 0 12px 12px">${itemRows.length?itemRows.map(([k,v])=>`<div class="li" style="cursor:default"><span>${esc(pname(k))}<small>${fmtN(v.qty)} دانە</small></span><b>${fmt(v.amt)}</b></div>`).join(""):""}${svc.map(x=>`<div class="li" style="cursor:default"><span>رېمونت #${x.no} · ${esc(svcItem(x))}<small>${fD(x.done)}</small></span><b>${fmt(num(x.fee))}</b></div>`).join("")}${!itemRows.length&&!svc.length?`<div class="li" style="cursor:default"><span class="foot">تېخى تاۋار ئالمىغان.</span></div>`:""}</div>
+  <div class="sec" style="border-radius:12px 12px 0 0;margin-top:12px"><span>ساتقان چېسلا ۋە باھاسى</span><span></span></div>
+  <div class="lst" style="border-radius:0 0 12px 12px">${R.lines.length?R.lines.map(z=>`<div class="li" style="cursor:default"><span>${esc(z.name)}<small>${fD(z.date)}${z.no?" · "+esc(z.no):""}</small><small class="itl">${fmtN(z.qty)} × ${fmt(z.price)}</small></span><b>${fmt(z.amt)}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">تېخى سېتىلغان تاۋار يوق.</span></div>`}</div>
   <div class="sec" style="border-radius:12px 12px 0 0;margin-top:12px"><span>بەرگەن پۇللىرى</span><span></span></div>
   <div class="lst" style="border-radius:0 0 12px 12px">${pays.length?pays.map(p=>`<div class="li" style="cursor:default"><span>${esc(p.t)}<small>${fD(p.date)}</small></span><b class="pos">+${fmt(p.a)}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">تېخى پۇل بەرمىگەن.</span></div>`}</div>
   <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button>${msgBtn(d.phone,txt,"ھەمبەھىرلەش")}<button class="btn g" onclick="custXls('${d.id}')">${svgI("chart",16)} Excel</button><button class="btn g" onclick="custPdf('${d.id}')">${svgI("note",16)} PDF</button></div>`;
@@ -2149,7 +2153,7 @@ function custReport(id){
 }
 /* ئومۇمىي راپور: ھەممە مۇشتەرىنىڭ ئالغان-بەرگىنى */
 function allData(){
-  const rows=cust().map(x=>{const R=custData(x.c.id);return R?{id:x.c.id,name:x.c.name,phone:x.c.phone||"",bought:R.bought,paid:R.paid,debt:R.debt,itemRows:R.itemRows,svc:R.svc,pays:R.pays}:null}).filter(Boolean)
+  const rows=cust().map(x=>{const R=custData(x.c.id);return R?{id:x.c.id,name:x.c.name,phone:x.c.phone||"",bought:R.bought,paid:R.paid,debt:R.debt,itemRows:R.itemRows,lines:R.lines,svc:R.svc,pays:R.pays}:null}).filter(Boolean)
     .filter(r=>r.itemRows.length||r.pays.length||Math.abs(r.debt)>0.004);
   rows.sort((a,b)=>b.debt-a.debt);return rows;
 }
@@ -2174,9 +2178,9 @@ async function allCustXls(){
   rows.forEach(r=>S1.push([r.name,r.phone,r.bought,r.paid,r.debt]));
   S1.push(["جەمئىي","",r2(rows.reduce((a,r)=>a+r.bought,0)),r2(rows.reduce((a,r)=>a+r.paid,0)),r2(rows.reduce((a,r)=>a+r.debt,0))]);
   const ws1=X.utils.aoa_to_sheet(S1);ws1["!cols"]=[{wch:22},{wch:18},{wch:16},{wch:16},{wch:14}];
-  const S2=[["مۇشتەرى","تاۋار","سانى","سوممىسى ($)"]];
-  rows.forEach(r=>{r.itemRows.forEach(([k,v])=>S2.push([r.name,pname(k),r2(v.qty),r2(v.amt)]));r.svc.forEach(x=>S2.push([r.name,"رېمونت #"+x.no+" · "+svcItem(x),"",num(x.fee)]))});
-  const ws2=X.utils.aoa_to_sheet(S2);ws2["!cols"]=[{wch:22},{wch:26},{wch:10},{wch:14}];
+  const S2=[["مۇشتەرى","چېسلا","تاۋار","سانى","باھاسى ($)","سوممىسى ($)"]];
+  rows.forEach(r=>{r.lines.forEach(z=>S2.push([r.name,fD(z.date),z.name+(z.no?" · "+z.no:""),r2(z.qty),r2(z.price),z.amt]));r.svc.forEach(x=>S2.push([r.name,fD(x.done),"رېمونت #"+x.no+" · "+svcItem(x),"","",num(x.fee)]))});
+  const ws2=X.utils.aoa_to_sheet(S2);ws2["!cols"]=[{wch:22},{wch:14},{wch:30},{wch:10},{wch:12},{wch:14}];
   const S3=[["مۇشتەرى","چېسلا","ئىزاھات","سوممىسى ($)"]];
   rows.forEach(r=>r.pays.forEach(p=>S3.push([r.name,fD(p.date),p.t,r2(p.a)])));
   const ws3=X.utils.aoa_to_sheet(S3);ws3["!cols"]=[{wch:22},{wch:14},{wch:22},{wch:14}];
@@ -2223,10 +2227,10 @@ function custPdfHtml(R){const {d,itemRows,svc,bought,pays,paid,debt}=R;
   <table><tr><th>جەمئىي ئالغان</th><th>جەمئىي بەرگەن</th><th>قالغان نېسى</th></tr>
   <tr><td>${fmtN(bought)}</td><td class="grn">${fmtN(paid)}</td><td class="${debt>0.004?"red":""}">${fmtN(debt)}</td></tr></table>
   <div class="sec">ئالغان تاۋارلار</div>
-  <table><tr><th>تاۋار</th><th>سانى</th><th>سوممىسى ($)</th></tr>
-  ${itemRows.map(([k,v])=>`<tr><td>${esc(pname(k))}</td><td>${fmtN(v.qty)}</td><td>${fmtN(v.amt)}</td></tr>`).join("")}
-  ${svc.map(x=>`<tr><td>رېمونت #${x.no} · ${esc(svcItem(x))}</td><td></td><td>${fmtN(num(x.fee))}</td></tr>`).join("")}
-  ${itemRows.length||svc.length?`<tr class="tot"><td>جەمئىي</td><td></td><td>${fmtN(bought)}</td></tr>`:`<tr><td colspan="3">تېخى تاۋار ئالمىغان</td></tr>`}</table>
+  <table><tr><th>چېسلا</th><th>تاۋار</th><th>سانى</th><th>باھاسى ($)</th><th>سوممىسى ($)</th></tr>
+  ${R.lines.map(z=>`<tr><td>${fD(z.date)}</td><td>${esc(z.name)}${z.no?" · "+esc(z.no):""}</td><td>${fmtN(z.qty)}</td><td>${fmtN(z.price)}</td><td>${fmtN(z.amt)}</td></tr>`).join("")}
+  ${svc.map(x=>`<tr><td>${fD(x.done)}</td><td>رېمونت #${x.no} · ${esc(svcItem(x))}</td><td></td><td></td><td>${fmtN(num(x.fee))}</td></tr>`).join("")}
+  ${R.lines.length||svc.length?`<tr class="tot"><td>جەمئىي</td><td></td><td></td><td></td><td>${fmtN(bought)}</td></tr>`:`<tr><td colspan="5">تېخى تاۋار ئالمىغان</td></tr>`}</table>
   <div class="sec">بەرگەن پۇللىرى</div>
   <table><tr><th>چېسلا</th><th>ئىزاھات</th><th>سوممىسى ($)</th></tr>
   ${pays.map(p=>`<tr><td>${fD(p.date)}</td><td>${esc(p.t)}</td><td>${fmtN(p.a)}</td></tr>`).join("")||`<tr><td colspan="3">تېخى پۇل بەرمىگەن</td></tr>`}
