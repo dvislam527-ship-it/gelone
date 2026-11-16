@@ -2073,8 +2073,14 @@ function addX(e){e.preventDefault();const f=e.target,zs=f.cu&&f.cu.value==="uzs"
   if(zs&&!rt){note("سوم ئۈچۈن كۇرسنى يېزىڭ («تېخىمۇ كۆپ» نىڭ ئىچىدە).");return}
   const x={id:uid(),time:nowT(),cat:f.c.value.trim(),amount:zs?r2(num(f.a.value)/rt):num(f.a.value),date:f.d.value||today(),note:f.w.value.trim()};
   if(zs){x.fx={cur:"UZS",amt:Math.round(num(f.a.value)),rate:rt};keepRate(x.date,rt)}S.expenses.push(x);go()}
-async function editX(id){const r=S.expenses.find(x=>x.id===id);const z=!!r.fx;const f=await form("چىقىمنى تەھرىرلەش",[{n:"c",l:"تۈرى",v:r.cat},{n:"a",l:z?"سومما (سوم)":"سومما",v:z?r.fx.amt:r.amount,num:1},...(z?[{n:"rt",l:"كۇرس: 1 $ = ? سوم",v:r.fx.rate,num:1}]:[]),{n:"d",l:"چېسلا",v:r.date,type:"date"},{n:"w",l:"ئىزاھات",v:r.note}]);if(!f)return;r.cat=(f.c||"").trim()||r.cat;
-  if(z){r.fx={cur:"UZS",amt:Math.round(num(f.a)),rate:num(f.rt)||r.fx.rate};r.amount=r2(r.fx.amt/r.fx.rate)}else r.amount=num(f.a);r.date=f.d||r.date;r.note=(f.w||"").trim();go()}
+async function editX(id){const r=S.expenses.find(x=>x.id===id);if(!r)return;const z=!!r.fx;
+  const f=await form("چىقىمنى تەھرىرلەش",[{n:"c",l:"تۈرى",v:r.cat},{n:"cu",l:"قايسى پۇل بىلەن يېزىلغان؟ (ئۆزگەرتسىڭىز، تۆۋەندىكى سوممىنى شۇ پۇلدا يېڭىدىن يېزىڭ)",v:z?"uzs":"usd",opts:[["usd","$ دوللار"],["uzs","سوم"]]},{n:"a",l:"سومما ("+(z?"سوم":"$")+" · ھازىرقى: "+fmtN(z?r.fx.amt:r.amount)+")",v:z?r.fx.amt:r.amount,num:1,req:1},{n:"rt",l:"كۇرس: 1 $ = ? سوم (پەقەت سوم ئۈچۈن)",v:z?r.fx.rate:(getRate()?String(getRate()):""),num:1},{n:"d",l:"چېسلا",v:r.date,type:"date"},{n:"w",l:"ئىزاھات",v:r.note}]);if(!f)return;
+  const toSom=f.cu==="uzs",a=num(f.a);
+  if(!a){await note("سومما خاتا.");return}
+  if(toSom){const rt=num(f.rt)||(z?r.fx.rate:0)||getRate();if(!rt){await note("سوم ئۈچۈن كۇرسنى يېزىڭ.");return}
+    r.fx={cur:"UZS",amt:Math.round(a),rate:rt};r.amount=r2(r.fx.amt/rt);keepRate(f.d||r.date,rt)}
+  else{delete r.fx;r.amount=r2(a)}
+  r.cat=(f.c||"").trim()||r.cat;r.date=f.d||r.date;r.note=(f.w||"").trim();go()}
 
 /* ---------- Müşteriler ---------- */
 function musteri(){
@@ -3691,7 +3697,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.17 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.18 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
