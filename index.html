@@ -2562,7 +2562,7 @@ function svcSave(e){
   const sale=v.sid&&S.sales.find(x=>x.id===v.sid),we=sale?warEnd(sale):"";
   S.sseq=(S.sseq||0)+1;
   const x={id:uid(),no:S.sseq,date:today(),time:nowT(),cid:v.cid,sid:v.sid||"",pid:sale?sale.pid:"",item:(v.item||"").trim(),serial:(v.serial||"").trim(),issue:(v.issue||"").trim(),acc:(v.acc||"").trim(),usta:(ustaGet(v.usta)||{}).name||"",addr:(v.addr||"").trim(),fee:num(v.fee),paid:num(v.paid),due:v.due||"",war:!!(we&&we>=today()),warEnd:we,st:0,done:"",log:[{d:today(),t:nowT(),st:0}]};
-  S.services.push(x);svNew=null;svF="open";go();svcShow(x.id);
+  S.services.push(x);svNew=null;svF="open";go();svcShow(x.id);tgSvc(x,"new");
 }
 const SST_UZ=["Qabul qilindi","Ta'mirda","Tayyor","Topshirildi","Ta'mirlab bo'lmadi"];
 function svcTicket(x){
@@ -2606,7 +2606,7 @@ async function svcSet(id,st){
     const f=await form(st===3?"مۇشتەرىگە تاپشۇرۇش":SST[4],[{n:"fee",l:x.war?"ئومۇمىي ھەققى (كاپالەت ئىچىدە)":"ئومۇمىي ھەققى",v:num(x.fee),num:1},{n:"paid",l:"ئالغان پۇل (ئالدىن ئالغىنى بىلەن بىرگە)",v:Math.max(num(x.fee),num(x.paid)),num:1}],st===3?"تاپشۇردۇم":"ساقلاش");
     if(!f)return;x.fee=num(f.fee);x.paid=num(f.paid);x.done=today();
   }else x.done="";
-  x.st=st;(x.log=x.log||[]).push({d:today(),t:nowT(),st});go();svcShow(id);
+  x.st=st;(x.log=x.log||[]).push({d:today(),t:nowT(),st});go();svcShow(id);tgSvc(x,"st");
   if(st>=3&&x.paid<x.fee)note("قالغان "+fmtN(x.fee-x.paid)+" "+S.cur+" مۇشتەرىنىڭ نېسىسىغا يېزىلدى.");
 }
 async function svcNote(id){const x=S.services.find(s=>s.id===id);const f=await form("ئىزاھات قوشۇش",[{n:"t",l:"مەسىلەن: زاپچاس زاكاز قىلىندى",ta:1,req:1}]);if(!f||!f.t.trim())return;(x.log=x.log||[]).push({d:today(),t:nowT(),txt:f.t.trim()});go();svcShow(id)}
@@ -3444,6 +3444,59 @@ window.SYNC=null;const SYNC=window.SYNC=(()=>{
 })();
 {const _persist=persist;persist=function(){_persist();SYNC.dirty()}}
 {const _ayar=ayar;ayar=function(){return SYNC.box()+_ayar()}}
+/* ---------- Telegram: servis xabarlari (Supabase tg-notify funksiyasi orqali) ---------- */
+const TG_URL="https://dluviisjgpnbxmzbqwzw.supabase.co/functions/v1/tg-notify";
+async function tgCall(o){
+  try{const r=await fetch(TG_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)});return await r.json()}
+  catch(e){return {ok:false,error:"network"}}
+}
+function tgSvcText(x,kind){
+  const c=S.customers.find(y=>y.id===x.cid)||{},it=svcItem(x),left=r2(num(x.fee)-num(x.paid));
+  const L=[(kind==="new"?"🆕 Yangi servis":"🔧 Servis holati o'zgardi")+" · №"+x.no,"Holat: "+SST_UZ[x.st],"Mijoz: "+(c.name||"")+(c.phone?" · "+c.phone:""),"Mahsulot: "+it];
+  if(x.issue)L.push("Nosozlik: "+x.issue);
+  if(x.acc)L.push("Qo'shimcha: "+x.acc);
+  if(x.addr)L.push("Manzil: "+x.addr);
+  if(x.usta)L.push("Usta: "+x.usta);
+  if(x.due)L.push("Tayyor bo'lish sanasi: "+x.due);
+  if(x.war)L.push("✅ Kafolat ichida");
+  if(x.st>=3&&left>0)L.push("Qolgan to'lov: "+fmtN(left)+" "+S.cur);
+  return L.join("\n");
+}
+async function tgSvc(x,kind){
+  const T=S.tg;if(!T||!T.chat)return;
+  if(kind==="new"&&T.nw===false)return;if(kind==="st"&&T.st===false)return;
+  const r=await tgCall({a:"send",chat:T.chat,text:tgSvcText(x,kind)});
+  if(!r.ok)note("Telegram خەۋىرى ئەۋەتىلمىدى: "+(r.error==="no_token"?"بوت ئۇلانمىغان":r.error==="network"?"تور يوق":r.error||"خاتالىق"));
+}
+function tgBox(){
+  const T=S.tg||{};
+  return `<div class="card" id="tgbox"><h2>Telegram · مۇلازىمەت (servis) خەۋىرى</h2>
+  <div class="foot" style="margin-bottom:10px">مۇلازىمەت (servis) قوبۇل قىلىنغاندا ياكى ھالىتى ئۆزگەرگەندە ئۇستا Telegram دا خەۋەر ئالىدۇ. بوت: <b dir="ltr">@gelone_servis_uz_bot</b></div>
+  <dl class="fm"><dt>ئۇستا</dt><dd>${T.chat?`<b>${esc(T.name||"")}</b> <small class="itl" style="display:inline">ID ${esc(String(T.chat))}</small>`:"— تاللانمىغان —"}</dd>
+  <dt>يېڭى مۇلازىمەت</dt><dd><label class="chk"><input type="checkbox" ${T.nw===false?"":"checked"} onchange="tgSet('nw',this.checked)"> خەۋەر ئەۋەتىلسۇن</label></dd>
+  <dt>ھالەت ئۆزگىرىشى</dt><dd><label class="chk"><input type="checkbox" ${T.st===false?"":"checked"} onchange="tgSet('st',this.checked)"> خەۋەر ئەۋەتىلسۇن</label></dd></dl>
+  <div class="row"><button class="btn" onclick="tgPick()">${T.chat?"ئۇستىنى ئالماشتۇرۇش":"ئۇستىنى تاللاش"}</button><button class="btn g" onclick="tgTest()" ${T.chat?"":"disabled"}>سىناق خەۋەر</button></div>
+  <div class="foot" style="margin-top:8px">ئۇستا ئاۋۋال Telegram دا بوتنى ئېچىپ <b>Start</b> نى بېسىشى كېرەك.</div></div>`;
+}
+function tgSet(k,v){S.tg=Object.assign({},S.tg||{},{[k]:!!v});persist()}
+async function tgPick(){
+  toast("Telegram دىن ئىزدەۋاتىدۇ...");
+  const r=await tgCall({a:"who"});
+  if(!r.ok){note(r.error==="no_token"?"بوت تېخى ئۇلانمىغان (token قويۇلمىغان).":r.error==="bad_token"?"بوت token ى خاتا.":"Telegram بىلەن ئۇلانمىدى.");return}
+  const C=(r.chats||[]).filter(c=>c.type==="private"||c.type==="group"||c.type==="supergroup");
+  if(!C.length){note("تېخى ھېچكىم بوتقا Start بېسىپ باقمىغان. ئۇستا @gelone_servis_uz_bot نى ئېچىپ Start بەسسۇن، ئاندىن قايتا سىناڭ.");return}
+  const v=await dlgOpen(`<h3>كىم خەۋەر ئالسۇن؟</h3>${C.map((c,i)=>`<button class="td" style="border:1px solid var(--line);border-radius:12px;margin-bottom:6px;width:100%;text-align:start" onclick="dlgClose(${i})"><span><b>${esc(c.name||c.username||String(c.id))}</b><br><small dir="ltr">${c.username?"@"+esc(c.username)+" · ":""}${c.type==="private"?"shaxsiy":"guruh"}</small></span></button>`).join("")}<div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">بىكار قىلىش</button></div>`);
+  if(v==null||!C[v])return;
+  const c=C[v];S.tg=Object.assign({},S.tg||{},{chat:c.id,name:c.name||c.username||String(c.id)});go();
+  const t=await tgCall({a:"send",chat:c.id,text:"✅ GELONE servis xabarlari ulandi. Bu yerga yangi servislar va holat o'zgarishlari keladi."});
+  toast(t.ok?"ئۇلاندى. ئۇستىغا سىناق خەۋەر ئەۋەتىلدى.":"تاللاندى، لېكىن خەۋەر ئەۋەتىلمىدى: "+(t.error||""));
+}
+async function tgTest(){
+  const T=S.tg;if(!T||!T.chat)return;
+  const r=await tgCall({a:"send",chat:T.chat,text:"🔔 Sinov xabari · GELONE · "+fD(today())+" "+nowT()});
+  toast(r.ok?"سىناق خەۋەر ئەۋەتىلدى":"ئەۋەتىلمىدى: "+(r.error||""));
+}
+{const _ayar2=ayar;ayar=function(){return tgBox()+_ayar2()}}
 
 setTimeout(()=>loadMB(),600);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")loadMB()});
 /* ---------- ئىشلەتكۈچىلەر: ھەر كىشىنىڭ ئۆز مەخپىي نومۇرى، ھەر ئىشنى كىم قىلغانلىقى خاتىرىلىنىدۇ ---------- */
@@ -3697,7 +3750,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.18 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.19 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
