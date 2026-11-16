@@ -2765,6 +2765,32 @@ async function fxNew(){
 }
 async function fxDel(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;if(!await ask("ئالماشتۇرۇش: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $\nبۇ خاتىرە ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;S.fxx=S.fxx.filter(y=>y.id!==id);go()}
 function cShift(d){const [y,m]=cMonth.split("-").map(Number),n=new Date(y,m-1+d,1);cMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");render()}
+/* تاپشۇرغان پۇللار تارىخى: قاچان، قانچە، جەمئىي */
+function handRows(who){
+  const H=(S.hand||[]).filter(h=>handWho(h)===who).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||""))||0);
+  let cum=0;return H.map(h=>{cum=r2(cum+num(h.amount));return {h,cum}});
+}
+function handList(who){
+  const P_=PART(),nm=who==="boss"?P_.boss:whoName(who),R=handRows(who),tot=R.length?R[R.length-1].cum:0;
+  const som=r2(R.reduce((a,x)=>a+(x.h.fx?num(x.h.fx.amt):0),0));
+  const D=who==="boss"?bossDebt():null;
+  $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("up",18)}</span><div><b>${esc(nm)} · ${who==="boss"?"تاپشۇرغان پۇللىرىم":"بەرگەن پۇللىرىم"}</b><small>${R.length} قېتىم · جەمئىي ${fmt(tot)}</small></div></div>
+  <div class="grid" style="margin:12px 0"><div class="stat"><small>جەمئىي</small><b class="pos">${fmt(tot)}</b></div><div class="stat"><small>قېتىم</small><b>${R.length}</b></div>${D&&D.has?`<div class="stat hero" style="grid-column:1/-1"><small>قالغان قەرز</small><b class="${D.left>0?"neg":"pos"}">${fmt(Math.abs(D.left))}</b></div>`:""}</div>
+  <div class="lst">${R.length?[...R].reverse().map(({h,cum})=>`<div class="li" onclick="handShow('${h.id}')"><span>${fD(h.date)}${h.time?" · "+esc(h.time):""}<small>${h.fx?esc(somF(h.fx.amt))+" · kurs "+fmtN(h.fx.rate)+" · ":""}${h.src==="own"?"💼 ئۆز چۆنتىكىدىن · ":""}${esc(h.note||"")}</small><small class="itl">جەمئىي: ${fmt(cum)}</small></span><b class="pos">${fmt(h.amount)}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">تېخى پۇل تاپشۇرۇلمىغان.</span></div>`}</div>
+  <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button>${msgBtn("",handListText(who),"ھەمبەھىرلەش")}<button class="btn g" onclick="handListPdf('${who}')">${svgI("note",16)} PDF</button></div>`;
+  $("#modal").classList.add("on");
+}
+function handListText(who){const nm=who==="boss"?PART().boss:whoName(who),R=handRows(who),tot=R.length?R[R.length-1].cum:0;
+  return [`${S.shop||"دۇكان"} · ${nm} — تاپشۇرغان پۇللار`,fD(today()),"-----",...R.map(({h,cum})=>`${fD(h.date)}${h.time?" "+h.time:""}: ${fmtN(h.amount)} ${S.cur}${h.fx?" ("+somF(h.fx.amt)+")":""}${h.note?" — "+h.note:""} · جەمئىي ${fmtN(cum)}`),"-----",`جەمئىي: ${fmtN(tot)} ${S.cur} (${R.length} قېتىم)`].join("\n")}
+async function handListPdf(who){
+  const nm=who==="boss"?PART().boss:whoName(who),R=handRows(who),tot=R.length?R[R.length-1].cum:0,D=who==="boss"?bossDebt():null;
+  const html=`<div class="sub">${S.shop?esc(S.shop)+" · ":""}${esc(nm)} · ${fD(today())}</div>
+  <table><tr><th>Jami topshirilgan</th><th>Marta</th>${D&&D.has?`<th>Qolgan qarz</th>`:""}</tr><tr><td class="grn">${fmtN(tot)}</td><td>${R.length}</td>${D&&D.has?`<td class="${D.left>0?"red":""}">${fmtN(Math.abs(D.left))}</td>`:""}</tr></table>
+  <table style="margin-top:10px"><tr><th style="width:34px">№</th><th>Sana</th><th>Izoh</th><th>Summa</th><th>Jami</th></tr>
+  ${R.map(({h,cum},i)=>`<tr><td>${i+1}</td><td>${fD(h.date)}${h.time?" "+esc(h.time):""}</td><td>${h.fx?esc(fxNote(h.fx))+" ":""}${esc(h.note||"")}</td><td>${fmtN(h.amount)}</td><td>${fmtN(cum)}</td></tr>`).join("")||`<tr><td colspan="5">Hali yozuv yo'q</td></tr>`}
+  ${R.length?`<tr class="tot"><td></td><td>Jami</td><td></td><td>${fmtN(tot)}</td><td></td></tr>`:""}</table>`;
+  await repPdf(nm+" — topshirilgan pullar",html,(nm||"hisob").replace(/[^\p{L}\p{N}_-]+/gu,"_")+"-topshirilgan-"+today());
+}
 async function handNew(who){
   const bal=cashOnHand(),P_=PART(),L=ledger();
   const opts=[["boss",P_.boss+(bossDebt().has?" (قەرز "+fmtN(bossDebt().left)+")":"")],...L.ps.map(o=>[o.id,o.me?"ھەققىمنى ئالدىم (قالغىنى "+fmtN(o.left)+")":o.name+" (قالغىنى "+fmtN(o.left)+")"])];
@@ -2860,6 +2886,7 @@ function debtCard(){
    <dl class="kv"><dt>باشلانغۇچ قەرز${D.d0?" · "+fD(D.d0):""}</dt><dd>${fmt(D.base)}</dd>${D.useG?`<dt>كېيىن كەلگەن مال</dt><dd>+${fmt(D.goods)}</dd>`:""}${D.ret?`<dt>قايتۇرۇلغان مال</dt><dd class="pos">−${fmt(D.ret)}</dd>`:""}<dt>تاپشۇرۇلغان پۇل</dt><dd class="pos">−${fmt(D.paid)}${D.som?`<br><small class="foot">ئىچىدە ${somF(D.som)}</small>`:""}</dd></dl>
    <div class="pleft"><span>قالغان قەرز</span><b class="${D.left>0?"neg":"pos"}">${D.left>0?"−":""}${fmt(Math.abs(D.left))}</b></div>
    <div class="row" style="margin-top:10px;gap:8px"><button class="btn" style="flex:1" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" style="flex:1" onclick="bossRet()">📦 مال قايتۇرۇش</button></div>
+   <button class="btn g" style="width:100%;margin-top:8px" onclick="handList('boss')">📜 تاپشۇرغان پۇللىرىم · قاچان قانچە</button>
    <label class="foot" style="flex-direction:row;align-items:center;gap:8px;margin-top:10px"><input type="checkbox" style="width:auto" ${D.useG?"checked":""} onchange="PART().debtGoods=this.checked;go()"> كېيىن كەلگەن مال (مال كەلدى) قەرزگە قوشۇلسۇن</label>
    <div class="mbline" style="margin-top:10px;border-radius:12px;border:1px solid var(--line)"><span>يېشىلنىڭ پايدا ئۈلۈشى (%${fmtN(D.pct)}) · ئايرىم</span><b>${fmt(D.share)}</b></div>
    ${capIn()>0?`<div class="mbline" style="margin-top:8px;border-radius:12px;border:1px solid rgba(var(--accrgb),.4);background:rgba(var(--accrgb),.08)"><span>💼 ئۆز چۆنتىكىمدىن قويغان پۇلۇم (سەرمايە)</span><b>${fmt(capIn())}</b></div>`:""}
@@ -2955,7 +2982,7 @@ function hesap(){
    <div class="row" style="justify-content:space-between"><b class="pnm">${esc(o.name)}</b><span class="badge st1">%${fmtN(o.pct)}</span></div>
    ${isBoss?`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd></dl><div class="foot">بۇ ئۈلۈش ئايرىم تۇرىدۇ؛ قەرزگە قوشۇلمايدۇ. تاپشۇرغان پۇل پەقەت قەرزدىن چۈشىدۇ.</div></div>`:`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd>${o.me&&o.exp?`<dt>چىقىملار</dt><dd class="neg">−${fmt(o.exp)}</dd>`:""}<dt>${isBoss?"تاپشۇرۇلغان":o.me?"ئالغانلىرىم":"بېرىلگەن"}</dt><dd>−${fmt(o.paid)}</dd></dl>
    <div class="pleft"><span>${isBoss?"تاپشۇرۇشقا قالغان":o.me?"مېنىڭ قالغان ھەققىم":"بېرىشكە قالغان"}</span><b class="${o.left<0?"neg":""}">${fmt(o.left)}</b></div>
-   <button class="btn g" style="width:100%" onclick="handNew('${o.id}')">${o.me?"ھەققىمنى ئالدىم":"پۇل بەردىم"}</button></div>`}`;
+   <button class="btn g" style="width:100%" onclick="handNew('${o.id}')">${o.me?"ھەققىمنى ئالدىم":"پۇل بەردىم"}</button><button class="btn g" style="width:100%;margin-top:8px" onclick="handList('${o.id}')">📜 ${o.me?"ئالغانلىرىم":"بەرگەنلىرىم"} · چېسلا ۋە سومما</button></div>`}`;
   return `${debtCard()}<div class="seg" style="display:flex;margin-bottom:12px;overflow-x:auto"><button style="flex:1" class="${hMon==="all"?"on":""}" onclick="hMon='all';render()">ھەممىسى</button>${months.slice(0,4).map(m=>`<button style="flex:1;white-space:nowrap" class="${hMon===m?"on":""}" onclick="hMon='${m}';render()">${MONTHL[+m.slice(5)-1]}</button>`).join("")}</div>
   <div class="grid">
    <div class="stat"><small>سېتىش</small><b>${fmt(L.st.ciro)}</b></div>
@@ -3634,7 +3661,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.14 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.15 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
