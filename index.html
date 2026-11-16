@@ -1693,7 +1693,7 @@ function xHead(title,rows){
 
 function showR(id,fresh){
   const r0=S.receipts.find(x=>x.id===id);if(!r0)return;const r=rRoot(r0);
-  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>سېتىش تاماملاندى</b><small>چەك ${rNo(r0)} ساقلاندى · ${fmt(r0.total)}${r0.par?" · "+rNo(r)+" چېكىگە قوشۇلدى":""}</small></div></div>`:"")+receiptHTML(r)+lossBox(r)+signBtns("r",r)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareR('${r.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlR('${r.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="btn s g" onclick="retR('${r.id}')">تاۋار قايتۇرۇش</button></div><div class="row noprint" style="margin-top:6px;justify-content:space-between"><button class="x e" onclick="editDate('r','${r.id}')">✎ چېسلانى تۈزىتىش</button><button class="x" title="چەكنى بىكار قىلىش" onclick="voidR('${r.id}')">چەكنى بىكار قىلىش</button></div><div id="rmsg" class="foot noprint"></div>`;
+  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>سېتىش تاماملاندى</b><small>چەك ${rNo(r0)} ساقلاندى · ${fmt(r0.total)}${r0.par?" · "+rNo(r)+" چېكىگە قوشۇلدى":""}</small></div></div>`:"")+receiptHTML(r)+lossBox(r)+signBtns("r",r)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareR('${r.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlR('${r.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="btn s g" onclick="retR('${r.id}')">تاۋار قايتۇرۇش</button></div><div class="row noprint" style="margin-top:6px;justify-content:space-between"><button class="x e" onclick="editFamDate('${r.id}')">✎ چېسلانى تۈزىتىش</button><button class="x" title="چەكنى بىكار قىلىش" onclick="voidR('${r.id}')">چەكنى بىكار قىلىش</button></div><div id="rmsg" class="foot noprint"></div>`;
   $("#modal").classList.add("on");
 }
 function closeM(){$("#modal").classList.remove("on");stopCam();if(tab==="kasa")$("#bc")?.focus()}
@@ -2328,6 +2328,16 @@ async function payC(id){
   S.payments.push({id:pid_,no:nextP(),before,after:r2(before-amt),alloc,cid:id,by:WHO(),amount:amt,date:okDate(f.d),time:nowT(),ts:Date.now(),pm:f.pm||"n",...(fx?{fx}:{})});go();showP(pid_,1)}
 /* خاتىرىنىڭ چېسلاسىنى تۈزىتىش (سېتىش چېكى، پۇل تاپشۇرۇش، قايتۇرۇش) */
 const okDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||"")?d:today();
+/* بىر نېسى چېكى زەنجىرىدە كۆپ سېتىش/پۇل بولسا، قايسىسىنىڭ چېسلاسىنى تۈزىتىشنى تاللىتىدۇ */
+async function editFamDate(id){
+  const R=S.receipts.find(x=>x.id===id);if(!R)return;
+  const fam=rFam(R),ch=rChain(R);
+  if(fam.length<=1&&!ch.some(x=>S.payments.includes(x))){editDate("r",R.id);return}
+  const items=[...fam.map(m=>({k:"r",id:m.id,t:"سېتىش "+rNo(m),d:m.date,a:num(m.total),key:rDT(m)})),...ch.filter(x=>S.payments.includes(x)).map(x=>({k:"p",id:x.id,t:"پۇل بەردى "+payNo(x),d:x.date,a:num(x.amount),key:(x.date||"")+(x.time||"")}))].sort((a,b)=>String(b.key).localeCompare(String(a.key)));
+  const v=await dlgOpen(`<h3>قايسىسىنىڭ چېسلاسى تۈزىتىلىدۇ؟</h3>${items.map((o,i)=>`<button class="td" style="border:1px solid var(--line);border-radius:12px;margin-bottom:6px;width:100%;text-align:start" onclick="dlgClose(${i})"><span><b dir="ltr">${esc(o.t)}</b><br><small>${fD(o.d)}</small></span><b>${o.k==="p"?"+":""}${fmt(o.a)}</b></button>`).join("")}<div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">بىكار قىلىش</button></div>`);
+  if(v==null||!items[v])return;
+  await editDate(items[v].k,items[v].id);
+}
 async function editDate(k,id){
   const L={r:S.receipts,p:S.payments,s:S.sales}[k],x=L&&L.find(y=>y.id===id);if(!x)return;
   const canPaid=k==="r"&&!num(x.paidS)&&CAN("edit");
@@ -3623,7 +3633,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.12 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.13 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
