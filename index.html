@@ -2766,6 +2766,10 @@ async function fxNew(){
 }
 async function fxDel(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;if(!await ask("ئالماشتۇرۇش: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $\nبۇ خاتىرە ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;S.fxx=S.fxx.filter(y=>y.id!==id);go()}
 function cShift(d){const [y,m]=cMonth.split("-").map(Number),n=new Date(y,m-1+d,1);cMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");render()}
+async function expEdit(id){await editX(id);expList()}
+async function expDel(id){const x=S.expenses.find(y=>y.id===id);if(!x)return;
+  if(!await ask("«"+(x.cat||"چىقىم")+"» · "+fmtN(num(x.amount))+" "+S.cur+" · "+fD(x.date)+"\nبۇ چىقىم ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;
+  logDel("expenses",x);S.expenses=S.expenses.filter(y=>y.id!==id);go();expList()}
 /* چىقىملار تىزىملىكى: ساننى بېسىپ ئاچىدۇ */
 function expRows(){const pred=hMon==="all"?null:(d=>d&&d.startsWith(hMon));
   return S.expenses.filter(x=>!pred||pred(x.date)).sort((a,b)=>(b.date+(b.time||"")).localeCompare(a.date+(a.time||"")))}
@@ -2776,7 +2780,8 @@ function expList(){
   $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("exp",18)}</span><div><b>چىقىملار · ${esc(lab)}</b><small>${R.length} خاتىرە · جەمئىي ${fmt(tot)}</small></div></div>
   <div class="grid" style="margin:12px 0"><div class="stat"><small>جەمئىي</small><b class="neg">−${fmt(tot)}</b></div><div class="stat"><small>خاتىرە</small><b>${R.length}</b></div></div>
   ${cats.length>1?`<div class="sec" style="border-radius:12px 12px 0 0"><span>تۈرى بويىچە</span><span></span></div><div class="lst" style="border-radius:0 0 12px 12px;margin-bottom:12px">${cats.map(([k,v])=>`<div class="li" style="cursor:default"><span>${esc(k)}</span><b>${fmt(v)}</b></div>`).join("")}</div>`:""}
-  <div class="lst">${R.length?R.map(x=>`<div class="li" onclick="closeM();editX('${x.id}')"><span>${esc(x.cat||"چىقىم")}<small>${fD(x.date)}${x.time?" · "+esc(x.time):""}${x.fx?" · "+esc(somF(x.fx.amt))+" · kurs "+fmtN(x.fx.rate):""}${x.note?" · "+esc(x.note):""}</small></span><b class="neg">−${fmt(num(x.amount))}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">بۇ ۋاقىتتا چىقىم يوق.</span></div>`}</div>
+  <div class="lst">${R.length?R.map(x=>`<div class="li" onclick="expEdit('${x.id}')"><span>${esc(x.cat||"چىقىم")}<small>${fD(x.date)}${x.time?" · "+esc(x.time):""}${x.fx?" · "+esc(somF(x.fx.amt))+" · kurs "+fmtN(x.fx.rate):""}${x.note?" · "+esc(x.note):""}</small></span><span class="side"><b class="neg">−${fmt(num(x.amount))}</b><button class="x e" title="تۈزىتىش" aria-label="تۈزىتىش" onclick="event.stopPropagation();expEdit('${x.id}')">✎</button><button class="x" title="ئۆچۈرۈش" aria-label="ئۆچۈرۈش" onclick="event.stopPropagation();expDel('${x.id}')">✕</button></span></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">بۇ ۋاقىتتا چىقىم يوق.</span></div>`}</div>
+  <div class="foot noprint" style="margin-top:6px">خاتا يېزىلغان چىقىمنى تۈزىتىش ئۈچۈن قۇرنى ياكى ✎ نى بېسىڭ.</div>
   <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button>${msgBtn("",expText(),"ھەمبەھىرلەش")}<button class="btn g" onclick="expPdf()">${svgI("note",16)} PDF</button></div>`;
   $("#modal").classList.add("on");
 }
@@ -3686,7 +3691,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.16 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.17 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
