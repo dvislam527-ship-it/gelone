@@ -813,6 +813,7 @@ input:focus,select:focus,textarea:focus{
 
 /* ---- üst çubuk: cam dokusu ---- */
 .bar{border-bottom:1px solid rgba(255,255,255,.05)}
+dd.tapn,.stat.tapn b{text-decoration:underline dotted;text-underline-offset:4px;cursor:pointer}dd.tapn::after,.stat.tapn b::after{content:" ›";opacity:.55}.stat.tapn{cursor:pointer}
 small.itl{display:block;margin-top:3px;line-height:1.6;color:var(--mute);font-size:12px}
 html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .bar{grid-template-columns:auto minmax(0,1fr) auto;gap:6px}
@@ -2765,6 +2766,31 @@ async function fxNew(){
 }
 async function fxDel(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;if(!await ask("ئالماشتۇرۇش: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $\nبۇ خاتىرە ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;S.fxx=S.fxx.filter(y=>y.id!==id);go()}
 function cShift(d){const [y,m]=cMonth.split("-").map(Number),n=new Date(y,m-1+d,1);cMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");render()}
+/* چىقىملار تىزىملىكى: ساننى بېسىپ ئاچىدۇ */
+function expRows(){const pred=hMon==="all"?null:(d=>d&&d.startsWith(hMon));
+  return S.expenses.filter(x=>!pred||pred(x.date)).sort((a,b)=>(b.date+(b.time||"")).localeCompare(a.date+(a.time||"")))}
+function expList(){
+  const R=expRows(),tot=r2(R.reduce((a,x)=>a+num(x.amount),0)),lab=hMon==="all"?"ھەممىسى":MONTHL[+hMon.slice(5)-1];
+  const by={};R.forEach(x=>{const k=x.cat||"باشقا";by[k]=r2((by[k]||0)+num(x.amount))});
+  const cats=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+  $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("exp",18)}</span><div><b>چىقىملار · ${esc(lab)}</b><small>${R.length} خاتىرە · جەمئىي ${fmt(tot)}</small></div></div>
+  <div class="grid" style="margin:12px 0"><div class="stat"><small>جەمئىي</small><b class="neg">−${fmt(tot)}</b></div><div class="stat"><small>خاتىرە</small><b>${R.length}</b></div></div>
+  ${cats.length>1?`<div class="sec" style="border-radius:12px 12px 0 0"><span>تۈرى بويىچە</span><span></span></div><div class="lst" style="border-radius:0 0 12px 12px;margin-bottom:12px">${cats.map(([k,v])=>`<div class="li" style="cursor:default"><span>${esc(k)}</span><b>${fmt(v)}</b></div>`).join("")}</div>`:""}
+  <div class="lst">${R.length?R.map(x=>`<div class="li" onclick="closeM();editX('${x.id}')"><span>${esc(x.cat||"چىقىم")}<small>${fD(x.date)}${x.time?" · "+esc(x.time):""}${x.fx?" · "+esc(somF(x.fx.amt))+" · kurs "+fmtN(x.fx.rate):""}${x.note?" · "+esc(x.note):""}</small></span><b class="neg">−${fmt(num(x.amount))}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">بۇ ۋاقىتتا چىقىم يوق.</span></div>`}</div>
+  <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button>${msgBtn("",expText(),"ھەمبەھىرلەش")}<button class="btn g" onclick="expPdf()">${svgI("note",16)} PDF</button></div>`;
+  $("#modal").classList.add("on");
+}
+function expText(){const R=expRows(),tot=r2(R.reduce((a,x)=>a+num(x.amount),0));
+  return [`${S.shop||"دۇكان"} · چىقىملار`,fD(today()),"-----",...R.map(x=>`${fD(x.date)}: ${x.cat||"چىقىم"} — ${fmtN(num(x.amount))} ${S.cur}${x.fx?" ("+somF(x.fx.amt)+")":""}${x.note?" · "+x.note:""}`),"-----",`جەمئىي: ${fmtN(tot)} ${S.cur} (${R.length} خاتىرە)`].join("\n")}
+async function expPdf(){
+  const R=expRows().slice().reverse(),tot=r2(R.reduce((a,x)=>a+num(x.amount),0));let cum=0;
+  const html=`<div class="sub">${S.shop?esc(S.shop)+" · ":""}${hMon==="all"?"Hammasi":esc(hMon)} · ${fD(today())}</div>
+  <table><tr><th>Jami xarajat</th><th>Soni</th></tr><tr><td class="red">${fmtN(tot)}</td><td>${R.length}</td></tr></table>
+  <table style="margin-top:10px"><tr><th style="width:34px">№</th><th>Sana</th><th>Turi</th><th>Izoh</th><th>Summa</th><th>Jami</th></tr>
+  ${R.map((x,i)=>{cum=r2(cum+num(x.amount));return `<tr><td>${i+1}</td><td>${fD(x.date)}${x.time?" "+esc(x.time):""}</td><td>${esc(x.cat||"")}</td><td>${x.fx?esc(fxNote(x.fx))+" ":""}${esc(x.note||"")}</td><td>${fmtN(num(x.amount))}</td><td>${fmtN(cum)}</td></tr>`}).join("")||`<tr><td colspan="6">Yozuv yo'q</td></tr>`}
+  ${R.length?`<tr class="tot"><td></td><td>Jami</td><td></td><td></td><td>${fmtN(tot)}</td><td></td></tr>`:""}</table>`;
+  await repPdf("Xarajatlar",html,"xarajatlar-"+(hMon==="all"?"hammasi":hMon)+"-"+today());
+}
 /* تاپشۇرغان پۇللار تارىخى: قاچان، قانچە، جەمئىي */
 function handRows(who){
   const H=(S.hand||[]).filter(h=>handWho(h)===who).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||""))||0);
@@ -2883,10 +2909,9 @@ function debtCard(){
   const D=bossDebt();
   if(!D.has)return `<div class="card debtc"><h2>يېشىلگە قەرزىم</h2><div class="foot" style="margin-bottom:10px">قەرزىڭىزنى بىر قېتىم يېزىڭ. ھەر قېتىم پۇل تاپشۇرغاندا قەرزدىن چۈشىدۇ، پايدا ئۈلۈشلىرى ئۆزگەرمەيدۇ.</div><button class="btn" style="width:100%" onclick="debtEdit()">باشلانغۇچ قەرزنى يېزىش</button></div>`;
   return `<div class="card debtc"><div class="row" style="justify-content:space-between"><h2 style="margin:0">يېشىلگە قەرزىم</h2><button class="x e" onclick="debtEdit()">✎</button></div>
-   <dl class="kv"><dt>باشلانغۇچ قەرز${D.d0?" · "+fD(D.d0):""}</dt><dd>${fmt(D.base)}</dd>${D.useG?`<dt>كېيىن كەلگەن مال</dt><dd>+${fmt(D.goods)}</dd>`:""}${D.ret?`<dt>قايتۇرۇلغان مال</dt><dd class="pos">−${fmt(D.ret)}</dd>`:""}<dt>تاپشۇرۇلغان پۇل</dt><dd class="pos">−${fmt(D.paid)}${D.som?`<br><small class="foot">ئىچىدە ${somF(D.som)}</small>`:""}</dd></dl>
+   <dl class="kv"><dt>باشلانغۇچ قەرز${D.d0?" · "+fD(D.d0):""}</dt><dd>${fmt(D.base)}</dd>${D.useG?`<dt>كېيىن كەلگەن مال</dt><dd>+${fmt(D.goods)}</dd>`:""}${D.ret?`<dt>قايتۇرۇلغان مال</dt><dd class="pos">−${fmt(D.ret)}</dd>`:""}<dt>تاپشۇرۇلغان پۇل</dt><dd class="pos tapn" onclick="handList('boss')">−${fmt(D.paid)}${D.som?`<br><small class="foot">ئىچىدە ${somF(D.som)}</small>`:""}</dd></dl>
    <div class="pleft"><span>قالغان قەرز</span><b class="${D.left>0?"neg":"pos"}">${D.left>0?"−":""}${fmt(Math.abs(D.left))}</b></div>
    <div class="row" style="margin-top:10px;gap:8px"><button class="btn" style="flex:1" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" style="flex:1" onclick="bossRet()">📦 مال قايتۇرۇش</button></div>
-   <button class="btn g" style="width:100%;margin-top:8px" onclick="handList('boss')">📜 تاپشۇرغان پۇللىرىم · قاچان قانچە</button>
    <label class="foot" style="flex-direction:row;align-items:center;gap:8px;margin-top:10px"><input type="checkbox" style="width:auto" ${D.useG?"checked":""} onchange="PART().debtGoods=this.checked;go()"> كېيىن كەلگەن مال (مال كەلدى) قەرزگە قوشۇلسۇن</label>
    <div class="mbline" style="margin-top:10px;border-radius:12px;border:1px solid var(--line)"><span>يېشىلنىڭ پايدا ئۈلۈشى (%${fmtN(D.pct)}) · ئايرىم</span><b>${fmt(D.share)}</b></div>
    ${capIn()>0?`<div class="mbline" style="margin-top:8px;border-radius:12px;border:1px solid rgba(var(--accrgb),.4);background:rgba(var(--accrgb),.08)"><span>💼 ئۆز چۆنتىكىمدىن قويغان پۇلۇم (سەرمايە)</span><b>${fmt(capIn())}</b></div>`:""}
@@ -2980,19 +3005,19 @@ function hesap(){
   const months=[...new Set(S.sales.map(x=>x.date&&x.date.slice(0,7)).filter(Boolean).concat([t.slice(0,7)]))].sort().reverse();
   const card=(o,isBoss)=>`<div class="card pcard${o.me?" mine":""}${isBoss?" boss":""}">
    <div class="row" style="justify-content:space-between"><b class="pnm">${esc(o.name)}</b><span class="badge st1">%${fmtN(o.pct)}</span></div>
-   ${isBoss?`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd></dl><div class="foot">بۇ ئۈلۈش ئايرىم تۇرىدۇ؛ قەرزگە قوشۇلمايدۇ. تاپشۇرغان پۇل پەقەت قەرزدىن چۈشىدۇ.</div></div>`:`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd>${o.me&&o.exp?`<dt>چىقىملار</dt><dd class="neg">−${fmt(o.exp)}</dd>`:""}<dt>${isBoss?"تاپشۇرۇلغان":o.me?"ئالغانلىرىم":"بېرىلگەن"}</dt><dd>−${fmt(o.paid)}</dd></dl>
+   ${isBoss?`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd></dl><div class="foot">بۇ ئۈلۈش ئايرىم تۇرىدۇ؛ قەرزگە قوشۇلمايدۇ. تاپشۇرغان پۇل پەقەت قەرزدىن چۈشىدۇ.</div></div>`:`<dl class="kv"><dt>ساپ پايدىدىن ئۈلۈش</dt><dd>${fmt(o.share)}</dd>${o.me&&o.exp?`<dt>چىقىملار</dt><dd class="neg">−${fmt(o.exp)}</dd>`:""}<dt>${isBoss?"تاپشۇرۇلغان":o.me?"ئالغانلىرىم":"بېرىلگەن"}</dt><dd class="tapn" onclick="handList('${o.id}')">−${fmt(o.paid)}</dd></dl>
    <div class="pleft"><span>${isBoss?"تاپشۇرۇشقا قالغان":o.me?"مېنىڭ قالغان ھەققىم":"بېرىشكە قالغان"}</span><b class="${o.left<0?"neg":""}">${fmt(o.left)}</b></div>
-   <button class="btn g" style="width:100%" onclick="handNew('${o.id}')">${o.me?"ھەققىمنى ئالدىم":"پۇل بەردىم"}</button><button class="btn g" style="width:100%;margin-top:8px" onclick="handList('${o.id}')">📜 ${o.me?"ئالغانلىرىم":"بەرگەنلىرىم"} · چېسلا ۋە سومما</button></div>`}`;
+   <button class="btn g" style="width:100%" onclick="handNew('${o.id}')">${o.me?"ھەققىمنى ئالدىم":"پۇل بەردىم"}</button></div>`}`;
   return `${debtCard()}<div class="seg" style="display:flex;margin-bottom:12px;overflow-x:auto"><button style="flex:1" class="${hMon==="all"?"on":""}" onclick="hMon='all';render()">ھەممىسى</button>${months.slice(0,4).map(m=>`<button style="flex:1;white-space:nowrap" class="${hMon===m?"on":""}" onclick="hMon='${m}';render()">${MONTHL[+m.slice(5)-1]}</button>`).join("")}</div>
   <div class="grid">
    <div class="stat"><small>سېتىش</small><b>${fmt(L.st.ciro)}</b></div>
    <div class="stat"><small>مال پۇلى (تەننەرخ)</small><b>${fmt(L.cogs)}</b></div>
    <div class="stat"><small>ئومۇمىي پايدا</small><b>${fmt(L.prof)}</b></div>
-   <div class="stat"><small>چىقىملار</small><b class="neg">−${fmt(L.gid)}</b></div>
+   <div class="stat tapn" onclick="expList()"><small>چىقىملار</small><b class="neg">−${fmt(L.gid)}</b></div>
    <div class="stat hero" style="grid-column:1/-1"><small>ساپ پايدا (بۆلۈنىدىغان)</small><b class="${L.net<0?"neg":""}">${fmt(L.net)}</b><div class="sub2">${[[PART().boss,bossPct()],...PART().shares.map(x=>[x.name,x.pct])].map(([n,p])=>`<span>${esc(n)} %${fmtN(p)}</span>`).join("")}</div></div>
   </div>
   ${card(L.boss,1)}${L.ps.map(o=>card(o)).join("")}
-  ${hMon==="all"?`<div class="card"><h2>تەكشۈرۈش · پۇل نەگە كەتتى</h2><dl class="kv"><dt>قولۇمدىكى نەق پۇل</dt><dd>${fmt(cash)}<br><small class="foot">${(c=>fmtN(c.usd)+" $ + "+somF(c.som))(cashMoves())}</small></dd><dt>چىقىم</dt><dd class="neg">${fmt(L.gid)}</dd><dt>يېشىلگە تاپشۇرغان</dt><dd class="pos">${fmt(L.boss.paid)}</dd>${(up=>up>0.004?`<dt>ئۈلۈش بەرگىنىم</dt><dd class="pos">${fmt(up)}</dd>`:"")(L.ps.reduce((a,o)=>a+o.paid,0))}<dt>مۇشتەرىلەردىكى نېسى</dt><dd>${fmt(debt)}</dd><dt>كارتا / ھاۋالە بىلەن كەلگەن</dt><dd>${fmt(cashMoves().nc.reduce((a,e)=>a+e.a,0))}</dd></dl><div class="foot" style="margin-top:8px">يىغقان نەق پۇل = قولدىكى نەق + چىقىم + يېشىلگە تاپشۇرغان. تاپشۇرغان پۇل يوقالمىدى، يېشىلنىڭ قەرزىدىن چۈشتى.</div></div>`:`<div class="foot" style="margin-bottom:10px">ئاي تاللانغاندا شۇ ئايدىكى سېتىش ۋە شۇ ئايدا بېرىلگەن پۇل كۆرسىتىلىدۇ. ئومۇمىي قالدۇق ئۈچۈن «ھەممىسى» نى تاللاڭ.</div>`}
+  ${hMon==="all"?`<div class="card"><h2>تەكشۈرۈش · پۇل نەگە كەتتى</h2><dl class="kv"><dt>قولۇمدىكى نەق پۇل</dt><dd>${fmt(cash)}<br><small class="foot">${(c=>fmtN(c.usd)+" $ + "+somF(c.som))(cashMoves())}</small></dd><dt>چىقىم</dt><dd class="neg tapn" onclick="expList()">${fmt(L.gid)}</dd><dt>يېشىلگە تاپشۇرغان</dt><dd class="pos tapn" onclick="handList('boss')">${fmt(L.boss.paid)}</dd>${(up=>up>0.004?`<dt>ئۈلۈش بەرگىنىم</dt><dd class="pos">${fmt(up)}</dd>`:"")(L.ps.reduce((a,o)=>a+o.paid,0))}<dt>مۇشتەرىلەردىكى نېسى</dt><dd>${fmt(debt)}</dd><dt>كارتا / ھاۋالە بىلەن كەلگەن</dt><dd>${fmt(cashMoves().nc.reduce((a,e)=>a+e.a,0))}</dd></dl><div class="foot" style="margin-top:8px">يىغقان نەق پۇل = قولدىكى نەق + چىقىم + يېشىلگە تاپشۇرغان. تاپشۇرغان پۇل يوقالمىدى، يېشىلنىڭ قەرزىدىن چۈشتى.</div></div>`:`<div class="foot" style="margin-bottom:10px">ئاي تاللانغاندا شۇ ئايدىكى سېتىش ۋە شۇ ئايدا بېرىلگەن پۇل كۆرسىتىلىدۇ. ئومۇمىي قالدۇق ئۈچۈن «ھەممىسى» نى تاللاڭ.</div>`}
   ${xlsCard()}
   <button class="btn g" style="width:100%" onclick="partEdit()">ئۈلۈشلەرنى ئۆزگەرتىش</button>
   <div class="foot" style="margin-top:8px">ھېسابلاش: ساپ پايدا (سېتىش − تەننەرخ − چىقىملار) ئۈلۈش بويىچە بۆلۈنىدۇ. يېشىلگە تاپشۇرغان پۇل پەقەت قەرزدىن چۈشىدۇ.</div>`;
@@ -3661,7 +3686,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.15 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.16 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
