@@ -2099,7 +2099,7 @@ function musteri(){
   <label>شەھەر / ئادرېس<input name="a"></label>
   <label>ئىزاھات<input name="w"></label></div></details>
   <button class="btn">ساقلاش</button></form></div></details>
-  ${tdebt>0?`<div class="alert" style="margin:0 0 12px;cursor:default">جەمئىي نېسى: <b>${fmt(tdebt)}</b></div>`:""}
+  ${tdebt>0?`<div class="alert" style="margin:0 0 12px;cursor:pointer" onclick="debtList()">جەمئىي نېسى: <b>${fmt(tdebt)}</b> <small style="opacity:.8">· تىزىملىك ‹</small></div>`:""}
   ${S.customers.length?`<button class="btn g" style="width:100%;margin:0 0 12px" onclick="allReport()">${svgI("chart",18)} ئومۇمىي راپور · ھەممە مۇشتەرى</button>`:""}
   ${S.customers.length?`<div class="csearch">${svgI("srch",20)}<input id="q" type="search" inputmode="search" placeholder="ئىسمى ياكى تېلېفون نومۇرى بىلەن ئىزدەش…" value="${esc(Q)}" oninput="srch(this.value)" autocomplete="off">${Q?`<button class="x" aria-label="تازىلاش" onclick="srch('')">✕</button>`:""}</div>${Q?`<div class="foot" style="margin:-4px 4px 8px">${cs.length} مۇشتەرى تېپىلدى</div>`:""}`:""}
   ${cs.length?`<div class="lst">${cs.map(x=>`<div class="li prow" onclick="selC('${x.c.id}')">${cavD(x.c,44,dcol(x.debt,maxD))}<span class="pmid"><span class="pn">${esc(x.c.name)}</span>${x.c.phone?`<small dir="ltr" style="text-align:right">${esc(x.c.phone)}</small>`:""}${x.debt>0&&x.age!=null?`<small class="${x.age>=LATE?"neg":""}">${x.age?x.age+" كۈندىن بېرى پۇل تاپشۇرمىدى":"بۈگۈن"}</small>`:""}</span><span class="side"><b style="color:${dcol(x.debt,maxD)}">${x.debt>0.004?fmt(x.debt):x.debt<-0.004?"ئالدىن "+fmt(-x.debt):"—"}</b>${x.debt>0.004?`<button class="btn s" onclick="event.stopPropagation();payC('${x.c.id}')">پۇل ئېلىش</button>`:""}</span></div>`).join("")}</div><div class="foot" style="margin-top:8px">سان: مۇشتەرىنىڭ نېسىسى. تەپسىلاتى ئۈچۈن ئىسىمنى بېسىڭ.</div>`:`<div class="empty">تېخى مۇشتەرى يوق.</div>`}`;
@@ -2807,6 +2807,31 @@ async function expPdf(){
 function handRows(who){
   const H=(S.hand||[]).filter(h=>handWho(h)===who).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||""))||0);
   let cum=0;return H.map(h=>{cum=r2(cum+num(h.amount));return {h,cum}});
+}
+function debtRows(){
+  return cust().filter(x=>x.debt>0.004).sort((a,b)=>b.debt-a.debt).map(x=>{
+    const id=x.c.id,rc=S.receipts.filter(r=>r.cid===id).map(r=>({r,tot:num(r.total),paid:num(r.paid)})).filter(o=>o.tot-o.paid>0.004).sort((a,b)=>(a.r.date||"").localeCompare(b.r.date||"")),
+    py=S.payments.filter(p=>p.cid===id).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+    return {x,rc,py,given:r2(rc.reduce((a,o)=>a+o.tot-o.paid,0)),got:r2(py.reduce((a,p)=>a+num(p.amount),0))};
+  });
+}
+function debtList(){
+  const R=debtRows(),tot=r2(R.reduce((a,o)=>a+o.x.debt,0));
+  $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("chart",18)}</span><div><b>نېسى (قەرز) تىزىملىكى</b><small>${R.length} مۇشتەرى · جەمئىي ${fmt(tot)}</small></div></div>
+  ${R.length?R.map(o=>`<div class="sec" style="margin-top:12px;border-radius:12px 12px 0 0" onclick="closeM();selC('${o.x.c.id}')"><span>${esc(o.x.c.name)}</span><b class="neg">${fmt(o.x.debt)}</b></div>
+  <div class="lst" style="border-radius:0 0 12px 12px">${o.rc.map(q=>`<div class="li" style="cursor:default"><span>${fD(q.r.date)} · № ${esc(rNo(q.r))}<small>ساتقىنى ${fmt(q.tot)} · ئالغىنى ${fmt(q.paid)}</small></span><b class="neg">${fmt(r2(q.tot-q.paid))}</b></div>`).join("")}${o.py.map(p=>`<div class="li" style="cursor:default"><span>${fD(p.date)} · تۆلىگەن<small>${p.fx?esc(fxNote(p.fx)):""}</small></span><b class="pos">−${fmt(num(p.amount))}</b></div>`).join("")}${!o.rc.length&&!o.py.length?`<div class="li" style="cursor:default"><span class="foot">كونا قالدۇق</span></div>`:""}</div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">نېسى يوق 👍</span></div>`}
+  <div class="foot noprint" style="margin-top:6px">مۇشتەرى ئىسمىنى بېسىڭ — ھېسابات ئېچىلىدۇ.</div>
+  <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button>${msgBtn("",debtText(),"ھەمبەھىرلەش")}<button class="btn g" onclick="debtPdf()">${svgI("note",16)} PDF</button></div>`;
+  $("#modal").classList.add("on");
+}
+function debtText(){const R=debtRows(),tot=r2(R.reduce((a,o)=>a+o.x.debt,0)),L=[`${S.shop||"دۇكان"} · نېسى`,fD(today()),"-----"];
+  R.forEach(o=>{L.push(`${o.x.c.name}: ${fmtN(o.x.debt)} ${S.cur}`);o.rc.forEach(q=>L.push(`  ${fD(q.r.date)} — ${fmtN(r2(q.tot-q.paid))}`));o.py.forEach(p=>L.push(`  ${fD(p.date)} تۆلىدى −${fmtN(num(p.amount))}`))});
+  L.push("-----",`جەمئىي: ${fmtN(tot)} ${S.cur}`);return L.join("\n")}
+async function debtPdf(){
+  const R=debtRows(),tot=r2(R.reduce((a,o)=>a+o.x.debt,0));
+  const html=`<div class="sub">${S.shop?esc(S.shop)+" · ":""}${fD(today())}</div><table><tr><th>Jami veresiye</th><th>Mijoz</th></tr><tr><td class="red">${fmtN(tot)}</td><td>${R.length}</td></tr></table>
+  ${R.map(o=>`<table style="margin-top:10px"><tr><th colspan="3" style="text-align:left">${esc(o.x.c.name)}</th><th>${fmtN(o.x.debt)}</th></tr>${o.rc.map(q=>`<tr><td>${fD(q.r.date)}</td><td>${esc(rNo(q.r))}</td><td>Sotildi ${fmtN(q.tot)} / olindi ${fmtN(q.paid)}</td><td class="red">${fmtN(r2(q.tot-q.paid))}</td></tr>`).join("")}${o.py.map(p=>`<tr><td>${fD(p.date)}</td><td></td><td>To'lov</td><td class="grn">-${fmtN(num(p.amount))}</td></tr>`).join("")}</table>`).join("")}`;
+  await repPdf("Veresiye ro'yxati",html,"veresiye-"+today());
 }
 function handList(who){
   const P_=PART(),nm=who==="boss"?P_.boss:whoName(who),R=handRows(who),tot=R.length?R[R.length-1].cum:0;
@@ -3751,7 +3776,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.20 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.21 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
