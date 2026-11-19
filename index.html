@@ -1365,7 +1365,7 @@ const UYL=[["ئا","a"],["ئە","e"],["ئو","o"],["ئۇ","u"],["ئۆ","o'"],["�
 const uyLat=t=>{let r=String(t||"");UYL.forEach(([a,b])=>{r=r.split(a).join(b)});return r.replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase())};
 const hasAr=t=>/[\u0600-\u06FF]/.test(t||"");
 const catUz=g=>{if(!g)return "";const c=(S.catUz||{})[g];if(c&&c.trim())return c.trim();if(CAT_UZ[g.trim()])return CAT_UZ[g.trim()];return hasAr(g)?uyLat(g):g};
-const specNoKw=p=>[p.brand,p.model].filter(Boolean).join(" · ");
+const specNoKw=p=>[p.brand,p.model,num(p.lt)?fmtN(p.lt)+" L":""].filter(Boolean).join(" · ");
 function plHTML(){
   const G=plGroups(),rt=PL.som&&getRate();let n=0;
   const css=`<style>.fis .plg{margin-top:10px}.fis .plcov{border:1px solid #d6dde2;border-radius:10px;overflow:hidden;background:#fff;margin:12px 0 0}.fis .plcov img{display:block;width:100%;max-height:230px;object-fit:contain;background:#fff;padding:8px 8px 0}.fis .plct{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 12px 9px;border-top:3px solid #e5483d;border-image:linear-gradient(90deg,#e5483d 64%,#f5973a 64%) 1}.fis .plct b{font-size:17px;color:#16202a;letter-spacing:.02em}.fis .plct small{font-size:11px;color:#56636c}.fis .plh2{margin:12px 0 0;font-size:15px;font-weight:700;color:#16202a;border-bottom:3px solid #e5483d;padding-bottom:3px}.fis .plg .xt{margin-top:0}.fis td.kw{font-weight:700;white-space:nowrap;color:#16202a}.fis td.pr{font-weight:700;font-size:13.5px;white-space:nowrap}</style>`;
@@ -1869,7 +1869,7 @@ const DEFCATS=["كومبى","ئېلېكترلىك كومبى","سۇ ئىسسىت
 const UNITS=["دانە","كىلوگرام","مېتىر","لىتىر","قۇتا","جۈپ","يۈرۈش"];
 let pv=null,pf=null,pCat="",CATS=[],AS=null,pfBusy=false;
 const unitOf=p=>(p&&p.unit)||"دانە";
-const spec=p=>[p.brand,p.model,num(p.kw)?fmtN(p.kw)+" kW":""].filter(Boolean).join(" · ");
+const spec=p=>[p.brand,p.model,num(p.kw)?fmtN(p.kw)+" kW":"",num(p.lt)?fmtN(p.lt)+" L":""].filter(Boolean).join(" · ");
 function pav(p,s=46){
   const c=p.color||PCOL[[...(p.name||"")].length%PCOL.length],ini=esc([...(p.name||"").trim()].slice(0,2).join("")||"+");
   return p.img?`<span class="pav" style="width:${s}px;height:${s}px"><img src="${esc(bsrc(p.img))}" alt=""></span>`:`<span class="pav" style="width:${s}px;height:${s}px;background:${c};font-size:${Math.round(s*.34)}px">${ini}</span>`;
@@ -1894,8 +1894,8 @@ function urun(){
   ${L.length?`<div class="lst">${L.map(x=>`<div class="li prow" onclick="pOpen('${x.p.id}')">${pav(x.p)}<span class="pmid"><span class="pn">${esc(x.p.name)}</span><small>${spec(x.p)?`<span dir="auto">${esc(spec(x.p))}</span> · `:x.p.cat?esc(x.p.cat)+" · ":""}${fmt(num(x.p.price))}</small></span><span class="pst ${isLow(x)?"lowb":""}"><b>${fmtN(x.stock)}</b><small>${esc(unitOf(x.p))}</small></span><button class="pplus" aria-label="مال كەلدى" title="مال كەلدى" onclick="event.stopPropagation();pIn('${x.p.id}')">＋</button></div>`).join("")}</div>`:`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}`;
 }
 function pOpen(id){pv=id;render();scrollTo(0,0)}
-function pNew(){tab="urun";pv=null;pf={name:"",brand:"",model:"",kw:"",cat:pCat&&pCat!=="__low"?pCat:"",price:"",cost:"",barcode:"",unit:"دانە",open:"",min:"",war:"",color:PCOL[Math.floor(Math.random()*PCOL.length)],img:""};render();scrollTo(0,0);setTimeout(()=>$("#pf_name")?.focus(),60)}
-function pEdit(id){const p=P(id);pf={id,name:p.name,brand:p.brand||"",model:p.model||"",kw:p.kw||"",cat:p.cat||"",price:p.price??"",cost:p.cost??"",barcode:p.barcode||"",unit:unitOf(p),open:"",min:p.min||"",war:p.war||"",color:p.color||"",img:p.img||""};render();scrollTo(0,0)}
+function pNew(){tab="urun";pv=null;pf={name:"",brand:"",model:"",kw:"",lt:"",cat:pCat&&pCat!=="__low"?pCat:"",price:"",cost:"",barcode:"",unit:"دانە",open:"",min:"",war:"",color:PCOL[Math.floor(Math.random()*PCOL.length)],img:""};render();scrollTo(0,0);setTimeout(()=>$("#pf_name")?.focus(),60)}
+function pEdit(id){const p=P(id);pf={id,name:p.name,brand:p.brand||"",model:p.model||"",kw:p.kw||"",lt:p.lt||"",cat:p.cat||"",price:p.price??"",cost:p.cost??"",barcode:p.barcode||"",unit:unitOf(p),open:"",min:p.min||"",war:p.war||"",color:p.color||"",img:p.img||""};render();scrollTo(0,0)}
 function editP(id){tab="urun";pEdit(id)}
 
 function pForm(){
@@ -1916,7 +1916,8 @@ function pForm(){
       <label>ماركىسى<input name="brand" list="pbrands" value="${esc(v.brand)}" placeholder="Demirdöküm، Vaillant…" autocomplete="off"><datalist id="pbrands">${[...new Set(["Demirdöküm","Vaillant","Baymak","ECA","Bosch","Buderus","Ariston","Viessmann","Arçelik","Beko","Siemens","Franke","Silverline",...S.products.map(p=>p.brand).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
       <label>مودېلى<input name="model" value="${esc(v.model)}" placeholder="Nitromix 24/24" autocomplete="off"></label>
     </div>
-    <label>قۇۋۋىتى (kW)<input name="kw" inputmode="decimal" value="${esc(v.kw)}" placeholder="مەسىلەن: 24" dir="ltr" style="max-width:160px"></label>
+    <div class="two"><label>قۇۋۋىتى (kW)<input name="kw" inputmode="decimal" value="${esc(v.kw)}" placeholder="مەسىلەن: 24" dir="ltr"></label>
+    <label>سىغىمى (L · litr)<input name="lt" inputmode="decimal" value="${esc(v.lt||"")}" placeholder="مەسىلەن: 80" dir="ltr"></label></div>
   </div>
 
   <div class="card"><h2>باھا</h2>
@@ -1976,7 +1977,7 @@ async function pSave(e){
   if(!name)return;
   if(b&&S.products.some(p=>p.id!==v.id&&!p.arch&&p.barcode===b)){await note("بۇ باركود باشقا بىر تاۋارغا تەۋە: "+S.products.find(p=>p.id!==v.id&&!p.arch&&p.barcode===b).name);return}
   if(!v.id&&S.products.some(p=>!p.arch&&p.name.trim()===name)&&!await ask("«"+name+"» ناملىق تاۋار ئاللىقاچان بار. يەنىلا يېڭى تاۋار قوشامسىز؟","قوشۇش"))return;
-  const data={name,brand:(v.brand||"").trim(),model:(v.model||"").trim(),kw:num(v.kw)||"",cat:(v.cat||"").trim(),price:num(v.price),cost:num(v.cost),barcode:b,unit:v.unit||"دانە",min:num(v.min),war:num(v.war),color:v.color||"",img:v.img||""};
+  const data={name,brand:(v.brand||"").trim(),model:(v.model||"").trim(),kw:num(v.kw)||"",lt:num(v.lt)||"",cat:(v.cat||"").trim(),price:num(v.price),cost:num(v.cost),barcode:b,unit:v.unit||"دانە",min:num(v.min),war:num(v.war),color:v.color||"",img:v.img||""};
   if(v.id){Object.assign(P(v.id),data);pf=null;pv=v.id;go();toast("ساقلاندى");return}
   const p={id:uid(),...data,open:0};S.products.push(p);
   if(num(v.open)){
@@ -3750,7 +3751,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.19 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.20 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
