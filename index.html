@@ -1865,8 +1865,8 @@ function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=nul
 
 /* ---------- تاۋارلار (Ürünler) ---------- */
 const PCOL=["#1677b8","#1d8a55","#c9382e","#b07d10","#7b4fb8","#d0662b","#2b8c8c","#5a6875"];
-const DEFCATS=["كومبى","ئېلېكترلىك كومبى","سۇ ئىسسىتقۇچ","ئانكاستىرە يۈرۈشلۈك","ئېھتىيات زاپچاس"];
-const UNITS=["دانە","كىلوگرام","مېتىر","لىتىر","قۇتا","جۈپ","يۈرۈش"];
+const DEFCATS=["كومبى","ئېلېكترلىك كومبى","سۇ ئىسسىتقۇچ","ئانكاستىرە يۈرۈشلۈك","ئېھتىيات زاپچاس","توك مۇنچا"];
+const UNITS=["دانە","كىلوگرام","مېتىر","لىتىر","قۇتا","جۈپ","يۈرۈش","توك مۇنچا"];
 let pv=null,pf=null,pCat="",CATS=[],AS=null,pfBusy=false;
 const unitOf=p=>(p&&p.unit)||"دانە";
 const spec=p=>[p.brand,p.model,num(p.kw)?fmtN(p.kw)+" kW":"",num(p.lt)?fmtN(p.lt)+" L":""].filter(Boolean).join(" · ");
@@ -1930,7 +1930,7 @@ function pForm(){
 
   <div class="card"><h2>تۈر ۋە بىرلىك</h2>
     <label>كاتېگورىيە<input name="cat" list="pcats" value="${esc(v.cat)}" placeholder="مەسىلەن: كومبى"><datalist id="pcats">${cats.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
-    ${(CATS=cats.length?cats:DEFCATS).length?`<div class="cchips sm">${CATS.map((c,i)=>`<button type="button" class="${v.cat===c?"on":""}" onclick="pfSet('cat',CATS[${i}])">${esc(c)}</button>`).join("")}</div>`:""}
+    ${(CATS=[...new Set([...DEFCATS,...cats])]).length?`<div class="cchips sm">${CATS.map((c,i)=>`<button type="button" class="${v.cat===c?"on":""}" onclick="pfSet('cat',CATS[${i}])">${esc(c)}</button>`).join("")}</div>`:""}
     <div class="lbl">ئۆلچەم بىرلىكى</div>
     <div class="uchips">${UNITS.map(u=>`<label><input type="radio" name="unit" value="${u}" ${v.unit===u?"checked":""}><span>${u}</span></label>`).join("")}</div>
   </div>
@@ -3776,7 +3776,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.21 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.22 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
