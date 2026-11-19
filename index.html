@@ -1257,10 +1257,12 @@ function panel(){
 function quickBuy(pid){pIn(pid)}
 
 /* ---------- Kasa ---------- */
+let kCat="",KCATS_=[];
 function kasa(){
   if(!S.products.length)return `<div class="card empty">سېتىش ئۈچۈن ئاۋۋال «تاۋارلار» بۆلىكىدىن تاۋار قوشۇڭ.</div><button class="btn" onclick="setTab('urun')">تاۋار قوشۇش</button>`;
   const c=calc(),st={};c.forEach(x=>st[x.p.id]=x.stock);
-  const list=AP().filter(p=>hit(p.name+" "+(p.barcode||"")+" "+(p.cat||"")+" "+spec(p)));
+  const KCATS=[...new Set(AP().map(p=>p.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ug"));if(kCat&&!KCATS.includes(kCat))kCat="";KCATS_=KCATS;
+  const list=AP().filter(p=>(!kCat||p.cat===kCat)&&hit(p.name+" "+(p.barcode||"")+" "+(p.cat||"")+" "+spec(p)));
   if(!cartChosen)return custPick();
   const sub=cart.reduce((a,x)=>a+x.qty*x.price,0),tot=Math.max(0,sub-num(cartDisc));
   const cc=cartCid&&S.customers.find(x=>x.id===cartCid),cd=cc?(cust().find(x=>x.c.id===cc.id)||{debt:0}).debt:0;
@@ -1268,6 +1270,7 @@ function kasa(){
   <div class="pos-grid">
   <div><div class="card">
     ${S.products.length>4?`<input id="q" type="search" placeholder="تاۋار ئىزدەش: نامى، ماركا، مودېل…" value="${esc(Q)}" oninput="srch(this.value)">`:""}
+    ${KCATS.length>1?`<div class="cchips"><button class="${kCat===""?"on":""}" onclick="kCat='';render()">ھەممىسى <i>${AP().length}</i></button>${KCATS.map((c,i)=>`<button class="${kCat===c?"on":""}" onclick="kCat=KCATS_[${i}];render()">${esc(c)} <i>${AP().filter(p=>p.cat===c).length}</i></button>`).join("")}</div>`:""}
     <div class="chips">${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);const chip=`<button class="chip${inc?" inc":""}" onclick="addCart('${p.id}')">${inc?`<i class="cbadge">${fmtN(inc.qty)}</i>`:""}${pav(p,34)}<span class="cmid"><span class="cn">${esc(p.name)}</span>${spec(p)?`<small class="spec" dir="auto">${esc(spec(p))}</small>`:""}<small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}</small></span></button>`;
       return inc?`<div class="chipw">${chip}<div class="cstep"><button type="button" aria-label="بىرنى ئازايتىش" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="بىرنى كۆپەيتىش" onclick="addCart('${p.id}')">+</button></div></div>`:chip}).join("")||`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}</div>
   </div></div>
@@ -1888,7 +1891,7 @@ function urun(){
   const chips=[["","ھەممىسى",all.length],...CATS.map((c,i)=>[i,c,all.filter(x=>x.p.cat===c).length])];
   return `<div class="ptop"><input id="q" type="search" placeholder="نامى، ماركا ياكى مودېل…" value="${esc(Q)}" oninput="srch(this.value)"><button class="btn" onclick="pNew()">＋ يېڭى</button></div>
   <div class="pstrip"><span><b>${all.length}</b> خىل تاۋار</span><span class="bo">ئامبار قىممىتى <b>${fmt(val)}</b></span></div>
-  <button class="btn g plbtn" onclick="plOpen()">📤 باھا تىزىملىكى — Telegram غا ئەۋەتىش</button>
+  <details class="more" style="margin-bottom:10px"><summary>⋯ تېخىمۇ كۆپ</summary><div style="padding-top:8px"><button class="btn g plbtn" onclick="plOpen()">📤 باھا تىزىملىكى — Telegram غا ئەۋەتىش</button></div></details>
   <div class="cchips">${chips.map(([k,l,n])=>`<button class="${(k===""?pCat==="":pCat===CATS[k])?"on":""}" onclick="pCat=${k===""?"''":"CATS["+k+"]"};render()">${esc(l)} <i>${n}</i></button>`).join("")}${lowN?`<button class="warnc ${pCat==="__low"?"on":""}" onclick="pCat='__low';render()">ئاز قالغان <i>${lowN}</i></button>`:""}</div>
   ${pCat==="__low"&&lowN?`<button class="btn g" style="width:100%;margin-bottom:10px" onclick="shareRaw(orderText())">زاكاز تىزىملىكىنى تەمىنلىگۈچىگە يوللاش</button>`:""}
   ${L.length?`<div class="lst">${L.map(x=>`<div class="li prow" onclick="pOpen('${x.p.id}')">${pav(x.p)}<span class="pmid"><span class="pn">${esc(x.p.name)}</span><small>${spec(x.p)?`<span dir="auto">${esc(spec(x.p))}</span> · `:x.p.cat?esc(x.p.cat)+" · ":""}${fmt(num(x.p.price))}</small></span><span class="pst ${isLow(x)?"lowb":""}"><b>${fmtN(x.stock)}</b><small>${esc(unitOf(x.p))}</small></span><button class="pplus" aria-label="مال كەلدى" title="مال كەلدى" onclick="event.stopPropagation();pIn('${x.p.id}')">＋</button></div>`).join("")}</div>`:`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}`;
@@ -3776,7 +3779,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.22 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.23 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
