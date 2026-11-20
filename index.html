@@ -2,7 +2,7 @@
 <html lang="ug" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-512.png"><meta name="apple-mobile-web-app-title" content="GELONE"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
 
 
@@ -3780,7 +3780,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.24 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.25 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
