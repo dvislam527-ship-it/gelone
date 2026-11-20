@@ -2065,7 +2065,7 @@ function gider(){
   return `<div class="card"><form class="f" onsubmit="addX(event)">
   <label>نېمىگە؟<input name="c" list="cats" required placeholder="ئىجارە، توك…"><datalist id="cats"><option value="ئىجارە"><option value="توشۇش"><option value="مائاش"><option value="توك / سۇ"><option value="ئېلان"><option value="باشقا"></datalist></label>
   <label>سومما<input name="a" required inputmode="decimal"></label>
-  <label>قايسى پۇل؟<select name="cu"><option value="usd">$ دوللار</option><option value="uzs">سوم</option></select></label>
+  <label>قايسى پۇل؟ *<select name="cu" required><option value="">— تاللاڭ —</option><option value="usd">$ دوللار</option><option value="uzs">سوم</option></select></label>
   <details class="more"><summary>تېخىمۇ كۆپ (چېسلا، ئىزاھات، كۇرس)</summary><div class="f2">
   <label>چېسلا<input name="d" type="date" value="${today()}"></label>
   <label>ئىزاھات<input name="w"></label>
@@ -2074,7 +2074,7 @@ function gider(){
   ${rows.length?`<div class="lst">${rows.slice(0,40).map(r=>`<div class="li" onclick="${r.ins?`showR('${r.ins}')`:`editX('${r.id}')`}"><span>${esc(r.cat)}<small>${fD(r.date)}${r.note?" · "+esc(r.note):""}</small></span><span class="side"><b class="neg">${r.fx?somF(r.fx.amt):fmt(r.amount)}</b>${r.ins?"":`<button class="x" title="ئۆچۈرۈش" onclick="event.stopPropagation();del('expenses','${r.id}')">✕</button>`}</span></div>`).join("")}</div>`:`<div class="empty">تېخى چىقىم خاتىرىسى يوق.</div>`}`;
 }
 
-function addX(e){e.preventDefault();const f=e.target,zs=f.cu&&f.cu.value==="uzs",rt=num(f.rt&&f.rt.value)||getRate();
+function addX(e){e.preventDefault();const f=e.target;if(!f.cu||!f.cu.value){note("قايسى پۇل بىلەن ئىكەنلىكىنى تاللاڭ ($ ياكى سوم).");try{f.cu.focus()}catch(_){}return}const zs=f.cu&&f.cu.value==="uzs",rt=num(f.rt&&f.rt.value)||getRate();
   if(zs&&!rt){note("سوم ئۈچۈن كۇرسنى يېزىڭ («تېخىمۇ كۆپ» نىڭ ئىچىدە).");return}
   const x={id:uid(),time:nowT(),cat:f.c.value.trim(),amount:zs?r2(num(f.a.value)/rt):num(f.a.value),date:f.d.value||today(),note:f.w.value.trim()};
   if(zs){x.fx={cur:"UZS",amt:Math.round(num(f.a.value)),rate:rt};keepRate(x.date,rt)}S.expenses.push(x);go()}
@@ -3798,7 +3798,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.26 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.27 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
