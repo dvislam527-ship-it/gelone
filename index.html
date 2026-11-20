@@ -1847,9 +1847,9 @@ async function shCopy(){const t=SH&&SH.t;if(!t)return;
 async function voidR(id){
   {const r=S.receipts.find(x=>x.id===id),R=r&&rRoot(r),fam=R?rFam(R):[];
    if(fam.length>1){const m=fam[fam.length-1];if(!await ask(`ئەڭ ئاخىرىدا قوشۇلغان سېتىش ${rNo(m)} (${fD(m.date)} · ${fmt(m.total)}) بىكار قىلىنسۇنمۇ؟ تاۋارلار ئامبارغا قايتىدۇ.`,"بىكار قىلىش",1))return;
-     logDel("receipts",m);S.receipts=S.receipts.filter(x=>x.id!==m.id);S.sales=S.sales.filter(x=>x.rid!==m.id&&x.ret!==m.id);S.payments.forEach(p=>{if((p.alloc||[]).some(a=>a.rid===m.id))p.alloc=p.alloc.map(a=>a.rid===m.id?{...a,rid:R.id}:a)});go();showR(R.id);return}}
+     trashRec(m.id);logDel("receipts",m);S.receipts=S.receipts.filter(x=>x.id!==m.id);S.sales=S.sales.filter(x=>x.rid!==m.id&&x.ret!==m.id);S.payments.forEach(p=>{if((p.alloc||[]).some(a=>a.rid===m.id))p.alloc=p.alloc.map(a=>a.rid===m.id?{...a,rid:R.id}:a)});go();showR(R.id);return}}
   if(!await ask("بۇ چەك بىكار قىلىنسۇنمۇ؟ تاۋارلار ئامبارغا قايتىدۇ.","بىكار قىلىش",1))return;
-  logDel("receipts",S.receipts.find(x=>x.id===id));S.receipts=S.receipts.filter(x=>x.id!==id);S.sales=S.sales.filter(x=>x.rid!==id&&x.ret!==id);S.expenses=S.expenses.filter(x=>x.ins!==id);closeM();go();
+  trashRec(id);logDel("receipts",S.receipts.find(x=>x.id===id));S.receipts=S.receipts.filter(x=>x.id!==id);S.sales=S.sales.filter(x=>x.rid!==id&&x.ret!==id);S.expenses=S.expenses.filter(x=>x.ins!==id);closeM();go();
 }
 
 /* ---------- Kamera ---------- */
@@ -3194,7 +3194,7 @@ function ayar(){
   <div class="card" style="display:none"><h2>ئۇستىلار</h2><div class="foot" style="margin-bottom:8px">مونتاژ قىلىدىغان ئۇستىلار. تېلېفونى بولسا ئىشنى WhatsApp بىلەن يوللىيالايسىز.</div>
   ${S.ustas.length?`<div class="lst" style="box-shadow:none;border:1px solid var(--line);margin-bottom:10px">${S.ustas.map(u=>`<div class="li" onclick="ustaEdit('${u.id}')"><span>${esc(u.name)}<small dir="ltr" style="text-align:right">${esc(u.phone||"تېلېفون يوق")}</small></span><span class="side"><small class="foot">${S.receipts.filter(r=>r.inst&&r.inst.usta===u.name).length} مونتاژ${(()=>{const t=S.receipts.filter(r=>r.inst&&r.inst.usta===u.name&&r.inst.done).reduce((a,r)=>a+num(r.inst.fee),0);return t?" · "+fmt(t):""})()}</small></span></div>`).join("")}</div>`:""}
   <button class="btn g" onclick="ustaEdit()">＋ ئۇستا قوشۇش</button></div>
-  <div class="card bo"><h2>ئۆچۈرۈلگەن مۇشتەرىلەر</h2><button class="btn g" onclick="setTab('trash')">ئەخلەت ساندۇقى (${S.trash.length})</button></div>
+  <div class="card bo"><h2>ئۆچۈرۈلگەن مۇشتەرى ۋە چەكلەر</h2><button class="btn g" onclick="setTab('trash')">ئەخلەت ساندۇقى (${S.trash.length})</button></div>
   <div class="card bo"><h2>قايتا باشلاش</h2><div class="foot" style="margin-bottom:10px">بۇ مەشغۇلاتنى قايتۇرغىلى بولمايدۇ. ئاۋۋال زاپاسلىۋېلىشىڭىزنى تەۋسىيە قىلىمىز.</div><button class="btn danger" onclick="resetAll()">ھەممە سانلىق مەلۇماتنى ئۆچۈرۈپ قايتا باشلاش</button></div>`;
 }
 /* لوگو: كىچىكلىتىپ سانلىق مەلۇمات ئىچىدە ساقلىنىدۇ، ھەممە تېلېفونغا ماسلىشىدۇ */
@@ -3249,10 +3249,28 @@ function unlinkCust(id){
   S.receipts.forEach(x=>{if(x.cid===id)x.cid=""});
   S.customers=S.customers.filter(x=>x.id!==id);S.payments=S.payments.filter(x=>x.cid!==id);sel=null;
 }
+function trashRec(id){
+  const r=S.receipts.find(x=>x.id===id);if(!r)return;
+  S.trash=Array.isArray(S.trash)?S.trash:[];
+  S.trash.push({tid:uid(),date:today(),at:Date.now(),by:CUR?CUR.id:"",r:JSON.parse(JSON.stringify(r)),sales:JSON.parse(JSON.stringify(S.sales.filter(x=>x.rid===id||x.ret===id))),exps:JSON.parse(JSON.stringify(S.expenses.filter(x=>x.ins===id))),pa:S.payments.filter(p=>(p.alloc||[]).some(a=>a.rid===id)).map(p=>({id:p.id,alloc:JSON.parse(JSON.stringify(p.alloc))}))});
+  if(S.trash.length>200)S.trash=S.trash.slice(-200);
+}
+function recTrashRow(t){const r=t.r,c=S.customers.find(x=>x.id===r.cid);
+  return `<div style="border-top:1px solid var(--line);padding:12px 0;margin-top:8px"><b>🧾 ${esc(c?c.name:"پارچە سېتىش")}</b> <span class="foot">چەك ${esc(String(r.no||""))} · ${fD(r.date)} ${esc(r.time||"")} · ${fmt(num(r.total))} · ئۆچۈرۈلگەن ${fD(t.date)}</span>
+  <div class="foot">${(t.sales||[]).map(x=>esc(pname(x.pid))+" ×"+fmtN(num(x.qty))).join(" · ")}</div>
+  <div class="row" style="margin-top:6px"><button class="btn s" onclick="restoreRec('${t.tid}')">ئەسلىگە كەلتۈرۈش</button><button class="btn s g" onclick="purgeT('${t.tid}')">پۈتۈنلەي ئۆچۈرۈش</button></div></div>`}
+function restoreRec(tid){
+  const t=S.trash.find(x=>x.tid===tid);if(!t||!t.r)return;
+  if(!S.receipts.some(x=>x.id===t.r.id)){
+    S.receipts.push(t.r);(t.sales||[]).forEach(x=>{if(!S.sales.some(y=>y.id===x.id))S.sales.push(x)});(t.exps||[]).forEach(x=>{if(!S.expenses.some(y=>y.id===x.id))S.expenses.push(x)});
+    (t.pa||[]).forEach(o=>{const p=S.payments.find(x=>x.id===o.id);if(p)p.alloc=o.alloc});
+  }
+  S.trash=S.trash.filter(x=>x.tid!==tid);go();toast("چەك ئەسلىگە كەلدى");
+}
 function trash(){
   const rows=[...S.trash].reverse();
   return `<button class="btn g" onclick="setTab('ayar')" style="margin-bottom:14px">→ تەڭشەكلەر</button>
-  <div class="card"><h2>ئەخلەت ساندۇقى</h2><div class="foot">ئەسلىگە كەلتۈرگەن مۇشتەرىنىڭ سېتىش ۋە پۇل تاپشۇرۇش خاتىرىلىرىمۇ قايتىدۇ.</div>${rows.length?rows.map(t=>`<div style="border-top:1px solid var(--line);padding:12px 0;margin-top:8px"><b>${esc(t.c.name)}</b> <span class="foot">${esc(t.c.phone)} · ئۆچۈرۈلگەن ${fD(t.date)} · قەرز ${fmt(t.debt)}</span><div class="row" style="margin-top:6px"><button class="btn s" onclick="restoreC('${t.tid}')">ئەسلىگە كەلتۈرۈش</button><button class="btn s danger" onclick="purgeT('${t.tid}')">پۈتۈنلەي ئۆچۈرۈش</button></div></div>`).join(""):`<div class="empty">ئەخلەت ساندۇقى قۇرۇق.</div>`}</div>`;
+  <div class="card"><h2>ئەخلەت ساندۇقى</h2><div class="foot">ئۆچۈرۈلگەن چەكلەرمۇ مۇشۇ يەردە (🧾). ئەسلىگە كەلتۈرگەن مۇشتەرىنىڭ سېتىش ۋە پۇل تاپشۇرۇش خاتىرىلىرىمۇ قايتىدۇ.</div>${rows.length?rows.map(t=>t.r?recTrashRow(t):`<div style="border-top:1px solid var(--line);padding:12px 0;margin-top:8px"><b>${esc(t.c.name)}</b> <span class="foot">${esc(t.c.phone)} · ئۆچۈرۈلگەن ${fD(t.date)} · قەرز ${fmt(t.debt)}</span><div class="row" style="margin-top:6px"><button class="btn s" onclick="restoreC('${t.tid}')">ئەسلىگە كەلتۈرۈش</button><button class="btn s danger" onclick="purgeT('${t.tid}')">پۈتۈنلەي ئۆچۈرۈش</button></div></div>`).join(""):`<div class="empty">ئەخلەت ساندۇقى قۇرۇق.</div>`}</div>`;
 }
 function restoreC(tid){
   const t=S.trash.find(x=>x.tid===tid);if(!t)return;
@@ -3780,7 +3798,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.25 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.26 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
