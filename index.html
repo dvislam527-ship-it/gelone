@@ -2356,15 +2356,34 @@ async function editDate(k,id){
   const canPaid=k==="r"&&!num(x.paidS)&&CAN("edit");
   const F=[{n:"d",l:"توغرا چېسلا",v:x.date,type:"date",req:1}];
   if(canPaid)F.push({n:"pd",l:"ئالغان پۇل ($) · ئالمىغان بولسا 0 يېزىڭ، چەك سوممىسى "+fmtN(num(x.total)),v:String(num(x.paid)),num:1,req:1});
-  const f=await form(canPaid?"چېكنى تۈزىتىش":"چېسلانى تۈزىتىش",F,"ساقلاش");
+  const LN=(k==="r"&&CAN("edit"))?S.sales.filter(y=>y.rid===id&&!y.ret):[];
+  LN.forEach((y,i)=>F.push({n:"ln"+i,l:pname(y.pid)+" × "+fmtN(num(y.qty))+" · سېتىش باھاسى ($)",v:String(num(y.price)),num:1,req:1}));
+  const f=await form((canPaid||LN.length)?"چېكنى تۈزىتىش":"چېسلانى تۈزىتىش",F,"ساقلاش");
   if(!f)return;
   const dOk=/^\d{4}-\d{2}-\d{2}$/.test(f.d||"");
   let msg=[];
+  const oldTot=num(x.total),wasFull=num(x.paid)>=oldTot-0.004;let origPd=num(x.paid);
+  if(LN.length){
+    const np=[];
+    for(let i=0;i<LN.length;i++){const raw=String(f["ln"+i]==null?"":f["ln"+i]).replace(",",".").trim(),v=Number(raw);
+      if(raw===""||!isFinite(v)||v<0){note("باھا خاتا: "+pname(LN[i].pid));return}np.push(r2(v))}
+    const ch=LN.map((y,i)=>({y,o:num(y.price),n:np[i]})).filter(c=>Math.abs(c.o-c.n)>0.004);
+    if(ch.length){
+      const sum=LN.reduce((a,y,i)=>a+num(y.qty)*np[i],0),newTot=r2(sum-num(x.disc)),paid0=num(x.paid);
+      if(newTot<0){note("چەك سوممىسى مەنپىي بولۇپ قالدى. ئېتىبارنى تەكشۈرۈڭ.");return}
+      const keepFull=wasFull&&!num(x.paidS),after=keepFull?newTot:Math.min(paid0,newTot);
+      if(!await ask(ch.map(c=>pname(c.y.pid)+": "+fmtN(c.o)+" → "+fmtN(c.n)).join("\n")+"\n\nچەك سوممىسى "+fmtN(oldTot)+" دىن "+fmtN(newTot)+" غا ئۆزگىرىدۇ."+(keepFull?"\nپۇلى تولۇق ئېلىنغان، شۇڭا ئالغان پۇلمۇ "+fmtN(newTot)+" بولىدۇ.":"\nنېسى "+fmtN(r2(newTot-after))+" بولىدۇ."),"ساقلاش"))return;
+      ch.forEach(c=>{c.y.price=c.n});
+      x.total=newTot;x.paid=r2(after);if(x.paidU!=null&&keepFull)x.paidU=r2(after);if(keepFull)x.change=0;origPd=num(x.paid);
+      S.log=Array.isArray(S.log)?S.log:[];S.log.push({id:uid(),at:Date.now(),u:CUR?CUR.id:"",k:"receipts",d:"باھا تۈزىتىلدى "+rNo(x)+" · "+fmt(oldTot)+" → "+fmt(newTot)});
+      msg.push("باھا تۈزىتىلدى · "+fmtN(newTot));
+    }
+  }
   if(canPaid){
     const raw=String(f.pd==null?"":f.pd).replace(",",".").trim(),v=Number(raw);
     if(raw===""||!isFinite(v)||v<0){note("ئالغان پۇل خاتا. 0 ياكى مۇسبەت سان يېزىڭ.");return}
     if(v>num(x.total)+0.004){note("ئالغان پۇل چەك سوممىسىدىن ("+fmtN(num(x.total))+") ئارتۇق بولالمايدۇ.");return}
-    if(Math.abs(v-num(x.paid))>0.004){
+    if(Math.abs(v-num(x.paid))>0.004&&Math.abs(v-num(F.find(q=>q.n==="pd").v))>0.004){
       if(!await ask("ئالغان پۇل "+fmtN(num(x.paid))+" دىن "+fmtN(r2(v))+" غا ئۆزگەرتىلسۇنمۇ؟\nنېسى "+fmtN(r2(num(x.total)-v))+" بولىدۇ."))return;
       x.paid=r2(v);if(x.paidU!=null)x.paidU=r2(v);x.change=0;msg.push("ئالغان پۇل تۈزىتىلدى · "+fmtN(r2(v)));
     }
@@ -3798,7 +3817,7 @@ const TEAM=window.TEAM=(()=>{
     window.addEventListener("online",()=>run());
   }
   function box(){
-    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.27 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
+    return `<div class="card" id="syncbox"><h2>ئورتاق ساندان</h2><div class="foot" style="margin-bottom:10px">ھەممە تېلېفون ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ. ئۆزگىرىش بىر نەچچە سېكۇنتتا باشقا تېلېفونلارغا يېتىدۇ. Gmail كېرەك ئەمەس.</div><dl class="kv"><dt>ھالىتى</dt><dd>${err?esc(err):"ئۇلانغان ✓"}</dd><dt>ئاخىرقى ماسلاشتۇرۇش</dt><dd>${lastOk?`<span dir="ltr">${esc(lastOk)}</span>`:"—"}</dd><dt>سۈرەتلەر</dt><dd dir="ltr" style="text-align:right">${esc(pInfo||"—")}</dd><dt>سانلىق مەلۇمات</dt><dd dir="ltr" style="text-align:right">${S.sales.length} sat · ${S.receipts.length} fis · ${S.payments.length} ödeme · ${S.expenses.length} gider</dd><dt>نەشرى / كود</dt><dd dir="ltr" style="text-align:right">v6.28 · ${esc(String(rT).slice(-6))}</dd></dl><div class="row"><button class="btn" onclick="TEAM.run()">ھازىر ماسلاشتۇرۇش</button></div></div>`;
   }
   return {active,run,dirty,start,box,msg,photos};
 })();
