@@ -1283,7 +1283,7 @@ function quickBuy(pid){pIn(pid)}
 
 /* ---------- Kasa ---------- */
 let kCat="",KCATS_=[];
-let kWheel=(()=>{try{return localStorage.getItem("kwheel")==="1"}catch(e){return false}})(),wSel="";
+let kWheel=(()=>{try{return localStorage.getItem("kwheel")!=="0"}catch(e){return true}})(),wSel="";
 const WH=52;
 function wheelHTML(list,st){
   if(!list.length)return "";
@@ -1302,7 +1302,7 @@ function whlSync(){
   const items=[...el.querySelectorAll(".wi")],i=items.findIndex(x=>x.dataset.id===wSel);if(i<0)return;
   if(Math.abs(el.scrollTop-i*WH)>1)el.scrollTop=i*WH;
 }
-function whlTap(x){const el=x.parentNode,i=[...el.querySelectorAll(".wi")].indexOf(x);try{el.scrollTo({top:i*WH,behavior:"smooth"})}catch(e){el.scrollTop=i*WH}}
+function whlTap(x){wSel=x.dataset.id;addCart(wSel)}
 function whlAdd(){if(wSel)addCart(wSel)}
 function whlToggle(){kWheel=!kWheel;try{localStorage.setItem("kwheel",kWheel?"1":"0")}catch(e){}render()}
 function kasa(){
