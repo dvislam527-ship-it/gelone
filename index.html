@@ -859,6 +859,16 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 .chips .chip .cn{font-size:16px;line-height:1.3}
 .chips .chip small.spec{display:none}
 .chips .chip small:not(.spec){font-size:13px;color:var(--ink);opacity:.85}
+/* v6.32 — ئايلانما (iPhone ۋاقىت تاللىغۇچقا ئوخشاش) تاۋار تاللاش */
+.wheel{position:relative;margin-top:10px;border-radius:18px;background:var(--panel2);overflow:hidden}
+.whl{height:208px;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;-webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.whl::-webkit-scrollbar{display:none}
+.wpad{height:78px}
+.wi{height:52px;scroll-snap-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;opacity:.4;transform:scale(.9);transition:opacity .12s,transform .12s;cursor:pointer;padding:0 14px;line-height:1.25}
+.wi b{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wi small{font-size:12px;color:var(--mute)}
+.wi.on{opacity:1;transform:none}
+.wband{position:absolute;left:10px;right:10px;top:78px;height:52px;border-radius:12px;border:1px solid var(--acc);background:var(--accsoft);pointer-events:none}
 </style>
 </head>
 <body>
@@ -1103,10 +1113,11 @@ function render(){
   const f={panel,islem,kasa,urun,alis,gider,musteri,servis,sandoq,hesap,rapor,ayar,trash}[tab];
   const body=f();
   /* قايتا سىزىلغاندا تىزىملىكلەر ئورنىدا قالسۇن (iPhone دا سەكرەپ كەتمىسۇن) */
-  const keep=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips")].map(e=>[e.className,e.scrollTop,e.scrollLeft]),wy=window.scrollY;
+  const keep=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips,#view .whl")].map(e=>[e.className,e.scrollTop,e.scrollLeft]),wy=window.scrollY;
   $("#view").innerHTML=(tab==="panel"||tab==="islem")?body:`<div class="pg"><h2 style="margin:4px 0 12px;font-size:26px;letter-spacing:-.01em">${T(tab)}</h2>${body}</div>`;
   $("#acts").classList.remove("on");
-  if(keep.length){const now=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips")];keep.forEach(([c,t,l],i)=>{const e=now[i];if(e&&e.className===c){e.scrollTop=t;e.scrollLeft=l}})}
+  if(keep.length){const now=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips,#view .whl")];keep.forEach(([c,t,l],i)=>{const e=now[i];if(e&&e.className===c){e.scrollTop=t;e.scrollLeft=l}})}
+  try{whlSync()}catch(e){}
   if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy);
   if(tab==="kasa"&&!TOUCH){const a=document.activeElement;if(!a||a===document.body)$("#bc")?.focus()}
 }
@@ -1272,6 +1283,28 @@ function quickBuy(pid){pIn(pid)}
 
 /* ---------- Kasa ---------- */
 let kCat="",KCATS_=[];
+let kWheel=(()=>{try{return localStorage.getItem("kwheel")!=="0"}catch(e){return true}})(),wSel="";
+const WH=52;
+function wheelHTML(list,st){
+  if(!list.length)return "";
+  if(!list.some(p=>p.id===wSel))wSel=list[0].id;
+  return `<div class="wheel"><div class="whl" onscroll="whlScroll(this)">${'<div class="wpad"></div>'}${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);return `<div class="wi${p.id===wSel?" on":""}" data-id="${p.id}" onclick="whlTap(this)"><b>${esc(p.name)}</b><small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}${inc?` · ✓ ${fmtN(inc.qty)}`:""}</small></div>`}).join("")}<div class="wpad"></div></div><div class="wband"></div></div><button class="btn" style="width:100%;margin-top:10px" onclick="whlAdd()">＋ سېۋەتكە قوشۇش</button>`;
+}
+let whlRaf=0;
+function whlScroll(el){
+  if(whlRaf)return;
+  whlRaf=requestAnimationFrame(()=>{whlRaf=0;const items=[...el.querySelectorAll(".wi")];if(!items.length)return;
+    const i=Math.max(0,Math.min(items.length-1,Math.round(el.scrollTop/WH)));wSel=items[i].dataset.id;
+    items.forEach((x,k)=>x.classList.toggle("on",k===i))});
+}
+function whlSync(){
+  const el=document.querySelector("#view .whl");if(!el)return;
+  const items=[...el.querySelectorAll(".wi")],i=items.findIndex(x=>x.dataset.id===wSel);if(i<0)return;
+  if(Math.abs(el.scrollTop-i*WH)>1)el.scrollTop=i*WH;
+}
+function whlTap(x){const el=x.parentNode,i=[...el.querySelectorAll(".wi")].indexOf(x);try{el.scrollTo({top:i*WH,behavior:"smooth"})}catch(e){el.scrollTop=i*WH}}
+function whlAdd(){if(wSel)addCart(wSel)}
+function whlToggle(){kWheel=!kWheel;try{localStorage.setItem("kwheel",kWheel?"1":"0")}catch(e){}render()}
 function kasa(){
   if(!S.products.length)return `<div class="card empty">سېتىش ئۈچۈن ئاۋۋال «تاۋارلار» بۆلىكىدىن تاۋار قوشۇڭ.</div><button class="btn" onclick="setTab('urun')">تاۋار قوشۇش</button>`;
   const c=calc(),st={};c.forEach(x=>st[x.p.id]=x.stock);
@@ -1285,7 +1318,7 @@ function kasa(){
   <div><div class="card">
     ${S.products.length>4?`<input id="q" type="search" placeholder="تاۋار ئىزدەش: نامى، ماركا، مودېل…" value="${esc(Q)}" oninput="srch(this.value)">`:""}
     ${KCATS.length>1?`<div class="cchips"><button class="${kCat===""?"on":""}" onclick="kCat='';render()">ھەممىسى <i>${AS_().length}</i></button>${KCATS.map((c,i)=>`<button class="${kCat===c?"on":""}" onclick="kCat=KCATS_[${i}];render()">${esc(c)} <i>${AS_().filter(p=>p.cat===c).length}</i></button>`).join("")}</div>`:""}
-    <div class="chips">${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);const chip=`<button class="chip${inc?" inc":""}" onclick="addCart('${p.id}')">${inc?`<i class="cbadge">${fmtN(inc.qty)}</i>`:""}${pav(p,34)}<span class="cmid"><span class="cn">${esc(p.name)}</span>${spec(p)?`<small class="spec" dir="auto">${esc(spec(p))}</small>`:""}<small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}</small></span></button>`;
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button type="button" class="btn s g" onclick="whlToggle()">${kWheel?"☰ تىزىملىك":"◎ ئايلانما"}</button></div>${kWheel?wheelHTML(list,st):""}<div class="chips"${kWheel?` style="display:none"`:""}>${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);const chip=`<button class="chip${inc?" inc":""}" onclick="addCart('${p.id}')">${inc?`<i class="cbadge">${fmtN(inc.qty)}</i>`:""}${pav(p,34)}<span class="cmid"><span class="cn">${esc(p.name)}</span>${spec(p)?`<small class="spec" dir="auto">${esc(spec(p))}</small>`:""}<small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}</small></span></button>`;
       return inc?`<div class="chipw">${chip}<div class="cstep"><button type="button" aria-label="بىرنى ئازايتىش" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="بىرنى كۆپەيتىش" onclick="addCart('${p.id}')">+</button></div></div>`:chip}).join("")||`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}</div>
   </div></div>
   <div><div class="card"><h2>سېۋەت${cart.length?` <span class="foot" style="font-weight:400">· ${cart.length} خىل تاۋار</span>`:""}</h2>
