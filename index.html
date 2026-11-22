@@ -1275,8 +1275,8 @@ let kCat="",KCATS_=[];
 function kasa(){
   if(!S.products.length)return `<div class="card empty">سېتىش ئۈچۈن ئاۋۋال «تاۋارلار» بۆلىكىدىن تاۋار قوشۇڭ.</div><button class="btn" onclick="setTab('urun')">تاۋار قوشۇش</button>`;
   const c=calc(),st={};c.forEach(x=>st[x.p.id]=x.stock);
-  const KCATS=[...new Set(AP().map(p=>p.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ug"));if(kCat&&!KCATS.includes(kCat))kCat="";KCATS_=KCATS;
-  const list=AP().filter(p=>(!kCat||p.cat===kCat)&&hit(p.name+" "+(p.barcode||"")+" "+(p.cat||"")+" "+spec(p)));
+  const AS_=()=>AP().filter(p=>!p.nosale);const KCATS=[...new Set(AS_().map(p=>p.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ug"));if(kCat&&!KCATS.includes(kCat))kCat="";KCATS_=KCATS;
+  const list=AS_().filter(p=>(!kCat||p.cat===kCat)&&hit(p.name+" "+(p.barcode||"")+" "+(p.cat||"")+" "+spec(p)));
   if(!cartChosen)return custPick();
   const sub=cart.reduce((a,x)=>a+x.qty*x.price,0),tot=Math.max(0,sub-num(cartDisc));
   const cc=cartCid&&S.customers.find(x=>x.id===cartCid),cd=cc?(cust().find(x=>x.c.id===cc.id)||{debt:0}).debt:0;
@@ -1284,7 +1284,7 @@ function kasa(){
   <div class="pos-grid">
   <div><div class="card">
     ${S.products.length>4?`<input id="q" type="search" placeholder="تاۋار ئىزدەش: نامى، ماركا، مودېل…" value="${esc(Q)}" oninput="srch(this.value)">`:""}
-    ${KCATS.length>1?`<div class="cchips"><button class="${kCat===""?"on":""}" onclick="kCat='';render()">ھەممىسى <i>${AP().length}</i></button>${KCATS.map((c,i)=>`<button class="${kCat===c?"on":""}" onclick="kCat=KCATS_[${i}];render()">${esc(c)} <i>${AP().filter(p=>p.cat===c).length}</i></button>`).join("")}</div>`:""}
+    ${KCATS.length>1?`<div class="cchips"><button class="${kCat===""?"on":""}" onclick="kCat='';render()">ھەممىسى <i>${AS_().length}</i></button>${KCATS.map((c,i)=>`<button class="${kCat===c?"on":""}" onclick="kCat=KCATS_[${i}];render()">${esc(c)} <i>${AS_().filter(p=>p.cat===c).length}</i></button>`).join("")}</div>`:""}
     <div class="chips">${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);const chip=`<button class="chip${inc?" inc":""}" onclick="addCart('${p.id}')">${inc?`<i class="cbadge">${fmtN(inc.qty)}</i>`:""}${pav(p,34)}<span class="cmid"><span class="cn">${esc(p.name)}</span>${spec(p)?`<small class="spec" dir="auto">${esc(spec(p))}</small>`:""}<small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}</small></span></button>`;
       return inc?`<div class="chipw">${chip}<div class="cstep"><button type="button" aria-label="بىرنى ئازايتىش" onclick="cDec('${p.id}')">−</button><b>${fmtN(inc.qty)}</b><button type="button" aria-label="بىرنى كۆپەيتىش" onclick="addCart('${p.id}')">+</button></div></div>`:chip}).join("")||`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}</div>
   </div></div>
@@ -1958,6 +1958,7 @@ function pForm(){
       <label>ئاز قالسا ئاگاھلاندۇرۇش<input name="min" inputmode="decimal" value="${esc(v.min)}" placeholder="0"></label>
       <label>كاپالەت (ئاي)<input name="war" inputmode="numeric" value="${esc(v.war)}" placeholder="0"></label>
     </div>
+    <label class="nosale" style="display:flex;align-items:center;gap:10px;margin-top:6px"><input type="checkbox" name="nosale" ${v.nosale?"checked":""} style="width:22px;height:22px;flex:none"><span>سېتىش تىزىملىكىدە كۆرسەتمە<small class="foot" style="display:block;margin:0">ئامباردا ۋە قەرز ھېسابىدا قالىدۇ</small></span></label>
   </div>
 
 
@@ -1973,7 +1974,7 @@ function pMarginTxt(){
   if(!co)return `<span class="foot">ئالغان باھاسى يېزىلمىدى.</span>`;
   const k=pr-co;return `ھەر ${esc(pf.unit||"دانە")} دىن پايدا: <b class="${k<0?"neg":"pos"}">${fmt(k)}</b>${pr?` · <b>%${fmtN(k/pr*100)}</b>`:""}${k<0?` <span class="neg">زىيان!</span>`:""}`;
 }
-function pfKeep(){const f=$("#pfm");if(f)Object.assign(pf,Object.fromEntries(new FormData(f)))}
+function pfKeep(){const f=$("#pfm");if(f){Object.assign(pf,Object.fromEntries(new FormData(f)));const c=f.querySelector("[name=nosale]");if(c)pf.nosale=c.checked?1:0}}
 function pfSync(){pfKeep();const m=$("#pmargin");if(m)m.innerHTML=pMarginTxt();const a=$("#pavbox");if(a)a.innerHTML=pav(pf,88)}
 function pfSet(k,v,clearImg){pfKeep();pf[k]=v;if(clearImg)pf.img="";render()}
 function pfScan(){pfKeep();camScan(code=>{pfKeep();pf.barcode=code;render()})}
@@ -1994,7 +1995,7 @@ async function pSave(e){
   if(!name)return;
   if(b&&S.products.some(p=>p.id!==v.id&&!p.arch&&p.barcode===b)){await note("بۇ باركود باشقا بىر تاۋارغا تەۋە: "+S.products.find(p=>p.id!==v.id&&!p.arch&&p.barcode===b).name);return}
   if(!v.id&&S.products.some(p=>!p.arch&&p.name.trim()===name)&&!await ask("«"+name+"» ناملىق تاۋار ئاللىقاچان بار. يەنىلا يېڭى تاۋار قوشامسىز؟","قوشۇش"))return;
-  const data={name,brand:(v.brand||"").trim(),model:(v.model||"").trim(),kw:num(v.kw)||"",lt:num(v.lt)||"",cat:(v.cat||"").trim(),price:num(v.price),cost:num(v.cost),barcode:b,unit:v.unit||"دانە",min:num(v.min),war:num(v.war),color:v.color||"",img:v.img||""};
+  const data={name,brand:(v.brand||"").trim(),model:(v.model||"").trim(),kw:num(v.kw)||"",lt:num(v.lt)||"",cat:(v.cat||"").trim(),price:num(v.price),cost:num(v.cost),barcode:b,unit:v.unit||"دانە",min:num(v.min),war:num(v.war),color:v.color||"",img:v.img||"",nosale:v.nosale?1:0};
   if(v.id){Object.assign(P(v.id),data);pf=null;pv=v.id;go();toast("ساقلاندى");return}
   const p={id:uid(),...data,open:0};S.products.push(p);
   if(num(v.open)){
