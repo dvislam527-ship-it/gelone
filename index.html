@@ -3655,11 +3655,27 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
+const APP_VER="6.36";
+const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
+/* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
+function chkUpd(){
+  try{
+    if(!/^https?:/.test(location.protocol))return;
+    fetch(location.pathname+"?nc="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(tx=>{
+      const m=tx.match(/const APP_VER="([\d.]+)"/);
+      if(m&&verNum(m[1])>verNum(APP_VER)){
+        let n=0;try{n=+sessionStorage.getItem("updTry")||0;sessionStorage.setItem("updTry",String(n+1))}catch(e){}
+        if(n<3)location.replace(location.pathname+"?v="+m[1]+"&t="+Date.now());
+      }
+    }).catch(()=>{});
+  }catch(e){}
+}
+chkUpd();document.addEventListener("visibilitychange",()=>{if(!document.hidden)chkUpd()});
 function lockDraw(){
   let el=$("#lock");if(!el){el=document.createElement("div");el.id="lock";document.body.appendChild(el)}
   el.classList.toggle("on",LK.on);if(!LK.on)return;
   const logo=S.logo||(typeof DEF_LOGO!=="undefined"?DEF_LOGO:"");
-  const head=`<div class="lkhd"><div class="lkbrand"><svg class="lkflame" viewBox="0 0 24 30" aria-hidden="true"><defs><linearGradient id="lkfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd37a"/><stop offset="1" stop-color="#ff7a18"/></linearGradient></defs><path d="M13 1c0 5-5 7-5 13a5 5 0 0 0 10 0c0-2-1-3.3-1.2-5 2 1.2 3.2 3.2 3.2 6.2A8 8 0 1 1 6 15C6 8 10 5 13 1Z" fill="url(#lkfl)"/></svg><span class="lkword">GELONE</span></div>${logo?`<img src="${esc(logo)}" alt="">`:""}<b>${esc(S.shop||"دۇكىنىم")}</b></div>`;
+  const head=`<div class="lkhd"><div class="lkbrand"><svg class="lkflame" viewBox="0 0 24 30" aria-hidden="true"><defs><linearGradient id="lkfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd37a"/><stop offset="1" stop-color="#ff7a18"/></linearGradient></defs><path d="M13 1c0 5-5 7-5 13a5 5 0 0 0 10 0c0-2-1-3.3-1.2-5 2 1.2 3.2 3.2 3.2 6.2A8 8 0 1 1 6 15C6 8 10 5 13 1Z" fill="url(#lkfl)"/></svg><span class="lkword">GELONE</span></div>${logo?`<img src="${esc(logo)}" alt="">`:""}<b>${esc(S.shop||"دۇكىنىم")}</b><small style="display:block;opacity:.5;font-size:12px;margin-top:4px" dir="ltr">v${APP_VER}</small></div>`;
   if(LK.mode==="setup"){
     el.innerHTML=`<div class="lkbox">${head}<h3>ئىشلەتكۈچىلەرنى بەلگىلەش</h3>
      <p class="lkp">ئەپنى ھەر بىر ئادەم ئۆز ئىسمى ۋە ئۆز مەخپىي نومۇرى بىلەن ئاچىدۇ. ھەر بىر سېتىش، پۇل ۋە مال خاتىرىسىدە كىمنىڭ قىلغانلىقى كۆرۈنىدۇ.<br>ئاۋۋال ئۆزىڭىزنى (خوجايىن) قوشۇڭ. باشقىلارنى كېيىن «تەڭشەك» تىن قوشىسىز.</p>
