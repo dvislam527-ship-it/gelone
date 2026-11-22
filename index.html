@@ -876,6 +876,15 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 .wi .wm:active,.wi .wp:active{background:var(--acc);color:var(--accink)}
 .wi em{font-style:normal;color:var(--acc);font-weight:700}
 .wi.inc b{color:var(--acc)}
+.wi .wa{display:none;min-width:44px;height:40px;flex:none;border-radius:12px;border:1px solid rgba(36,211,191,.5);background:var(--accsoft);color:var(--ink);font-size:22px;line-height:1;cursor:pointer;padding:0 10px}
+.wi .wa.txt{font-size:14px;white-space:nowrap}
+.wi.on .wa{display:block}
+.wi .wa:active{background:var(--acc);color:var(--accink)}
+.wr{justify-content:flex-start;padding:0 12px}
+.wr .wt{align-items:flex-start;text-align:start;overflow:hidden}
+.wr .wt b{max-width:100%}
+.wr .pav{flex:none}
+.wg .whl{height:208px}.wg .wpad{height:78px}.wg .wband{top:78px}
 </style>
 </head>
 <body>
@@ -1124,7 +1133,7 @@ function render(){
   $("#view").innerHTML=(tab==="panel"||tab==="islem")?body:`<div class="pg"><h2 style="margin:4px 0 12px;font-size:26px;letter-spacing:-.01em">${T(tab)}</h2>${body}</div>`;
   $("#acts").classList.remove("on");
   if(keep.length){const now=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips,#view .whl")];keep.forEach(([c,t,l],i)=>{const e=now[i];if(e&&e.className===c){e.scrollTop=t;e.scrollLeft=l}})}
-  try{whlSync()}catch(e){}
+  try{whlSync();wgSync()}catch(e){}
   if(Math.abs(window.scrollY-wy)>2)window.scrollTo(0,wy);
   if(tab==="kasa"&&!TOUCH){const a=document.activeElement;if(!a||a===document.body)$("#bc")?.focus()}
 }
@@ -1305,12 +1314,38 @@ function whlScroll(el){
     items.forEach((x,k)=>x.classList.toggle("on",k===i));const q=document.getElementById("wq");if(q){const c=cart.find(c=>c.pid===wSel);q.textContent=fmtN(c?c.qty:0)}});
 }
 function whlSync(){
-  const el=document.querySelector("#view .whl");if(!el)return;
+  const el=document.querySelector("#view .whl:not([data-key])");if(!el)return;
   const items=[...el.querySelectorAll(".wi")],i=items.findIndex(x=>x.dataset.id===wSel);if(i<0)return;
   if(Math.abs(el.scrollTop-i*WH)>1)el.scrollTop=i*WH;
 }
 function whlTap(x){wSel=x.dataset.id;addCart(wSel)}
 function whlAdd(){if(wSel)addCart(wSel)}
+const WG={sel:{},tap:{cp:id=>chooseC(id),cl:id=>selC(id),pl:id=>pOpen(id)}};
+function wheelGen(key,rows,empty){
+  if(!rows.length)return `<div class="empty">${empty||""}</div>`;
+  if(!rows.some(r=>r.id===WG.sel[key]))WG.sel[key]=rows[0].id;
+  const s=WG.sel[key];
+  return `<div class="wheel wg"><div class="whl" data-key="${key}" onscroll="wgScroll(this)"><div class="wpad"></div>${rows.map(r=>`<div class="wi wr${r.id===s?" on":""}" data-id="${r.id}" onclick="wgTap(this)">${r.av||""}<span class="wt"><b>${r.title}</b><small>${r.sub||""}</small></span>${r.act||""}</div>`).join("")}<div class="wpad"></div></div><div class="wband"></div></div>`;
+}
+let wgRaf=0;
+function wgScroll(el){
+  if(wgRaf)return;
+  wgRaf=requestAnimationFrame(()=>{wgRaf=0;const items=[...el.querySelectorAll(".wi")];if(!items.length)return;
+    const i=Math.max(0,Math.min(items.length-1,Math.round(el.scrollTop/WH)));WG.sel[el.dataset.key]=items[i].dataset.id;
+    items.forEach((x,k)=>x.classList.toggle("on",k===i))});
+}
+function wgSync(){
+  document.querySelectorAll("#view .whl[data-key]").forEach(el=>{
+    const items=[...el.querySelectorAll(".wi")],i=items.findIndex(x=>x.dataset.id===WG.sel[el.dataset.key]);if(i<0)return;
+    if(Math.abs(el.scrollTop-i*WH)>1)el.scrollTop=i*WH;
+  });
+}
+function wgTap(x){
+  const el=x.parentNode,key=el.dataset.key,id=x.dataset.id;
+  if(WG.sel[key]===id&&x.classList.contains("on")){const f=WG.tap[key];if(f)f(id);return}
+  WG.sel[key]=id;const i=[...el.querySelectorAll(".wi")].indexOf(x);
+  try{el.scrollTo({top:i*WH,behavior:"smooth"})}catch(e){el.scrollTop=i*WH}
+}
 function whlToggle(){kWheel=!kWheel;try{localStorage.setItem("kwheel",kWheel?"1":"0")}catch(e){}render()}
 function kasa(){
   if(!S.products.length)return `<div class="card empty">سېتىش ئۈچۈن ئاۋۋال «تاۋارلار» بۆلىكىدىن تاۋار قوشۇڭ.</div><button class="btn" onclick="setTab('urun')">تاۋار قوشۇش</button>`;
@@ -1364,7 +1399,7 @@ function custPick(){
   <button class="btn g" style="width:100%;padding:13px" onclick="chooseC('__new')">＋ يېڭى مۇشتەرى</button>
   ${cart.length?`<div class="foot" style="margin-top:8px">سېۋەتتە ${cart.length} خىل تاۋار بار، ئۇلار ساقلىنىپ قالىدۇ.</div>`:""}</div>
   ${S.customers.length?`<div class="csearch">${svgI("srch",20)}<input id="cq" type="search" placeholder="مۇشتەرى ئىزدەش: ئىسمى ياكى تېلېفونى…" value="${esc(cq)}" oninput="cqS(this.value)" autocomplete="off"></div>
-  <div class="lst">${L.slice(0,80).map(x=>`<div class="li prow" onclick="chooseC('${x.c.id}')">${cav(x.c,40)}<span class="pmid"><span class="pn">${esc(x.c.name)}</span>${x.c.phone?`<small dir="ltr" style="text-align:right">${esc(x.c.phone)}</small>`:""}</span>${x.debt>0?`<span class="side"><small class="neg">نېسى ${fmt(x.debt)}</small></span>`:""}</div>`).join("")||`<div class="li" style="cursor:default"><span class="foot">ماس كېلىدىغان مۇشتەرى يوق.</span></div>`}</div>`:""}`;
+  ${wheelGen("cp",L.slice(0,150).map(x=>({id:x.c.id,av:cav(x.c,36),title:esc(x.c.name),sub:(x.c.phone?`<span dir="ltr">${esc(x.c.phone)}</span>`:"")+(x.debt>0?` · <span class="neg">${fmt(x.debt)}</span>`:"")})),"ماس كېلىدىغان مۇشتەرى يوق.")}</div>`:""}`;
 }
 function cqS(v){cq=v;render();const i=$("#cq");if(i){i.focus();try{i.setSelectionRange(v.length,v.length)}catch(e){}}}
 async function chooseC(id){if(id==="__new"){const c=await newCust();if(!c)return;id=c.id}cartCid=id;cartJoin=null;cartChosen=true;cq="";Q="";render();scrollTo(0,0)}
@@ -1948,7 +1983,7 @@ function urun(){
   <details class="more" style="margin-bottom:10px"><summary>⋯ تېخىمۇ كۆپ</summary><div style="padding-top:8px"><button class="btn g plbtn" onclick="plOpen()">📤 باھا تىزىملىكى — Telegram غا ئەۋەتىش</button></div></details>
   <div class="cchips">${chips.map(([k,l,n])=>`<button class="${(k===""?pCat==="":pCat===CATS[k])?"on":""}" onclick="pCat=${k===""?"''":"CATS["+k+"]"};render()">${esc(l)} <i>${n}</i></button>`).join("")}${lowN?`<button class="warnc ${pCat==="__low"?"on":""}" onclick="pCat='__low';render()">ئاز قالغان <i>${lowN}</i></button>`:""}</div>
   ${pCat==="__low"&&lowN?`<button class="btn g" style="width:100%;margin-bottom:10px" onclick="shareRaw(orderText())">زاكاز تىزىملىكىنى تەمىنلىگۈچىگە يوللاش</button>`:""}
-  ${L.length?`<div class="lst">${L.map(x=>`<div class="li prow" onclick="pOpen('${x.p.id}')">${pav(x.p)}<span class="pmid"><span class="pn">${esc(x.p.name)}</span><small>${spec(x.p)?`<span dir="auto">${esc(spec(x.p))}</span> · `:x.p.cat?esc(x.p.cat)+" · ":""}${fmt(num(x.p.price))}</small></span><span class="pst ${isLow(x)?"lowb":""}"><b>${fmtN(x.stock)}</b><small>${esc(unitOf(x.p))}</small></span><button class="pplus" aria-label="مال كەلدى" title="مال كەلدى" onclick="event.stopPropagation();pIn('${x.p.id}')">＋</button></div>`).join("")}</div>`:`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}`;
+  ${L.length?`${wheelGen("pl",L.map(x=>({id:x.p.id,av:pav(x.p,34),title:esc(x.p.name),sub:`${x.p.cat?esc(x.p.cat)+" · ":""}${fmt(num(x.p.price))} · <span class="${isLow(x)?"neg":""}">${fmtN(x.stock)} ${esc(unitOf(x.p))}</span>`,act:`<button type="button" class="wa" aria-label="مال كەلدى" onclick="event.stopPropagation();pIn('${x.p.id}')">＋</button>`})))}`:`<div class="empty">ماس كېلىدىغان تاۋار يوق.</div>`}`;
 }
 function pOpen(id){pv=id;render();scrollTo(0,0)}
 function pNew(){tab="urun";pv=null;pf={name:"",brand:"",model:"",kw:"",lt:"",cat:pCat&&pCat!=="__low"?pCat:"",price:"",cost:"",barcode:"",unit:"دانە",open:"",min:"",war:"",color:PCOL[Math.floor(Math.random()*PCOL.length)],img:""};render();scrollTo(0,0);setTimeout(()=>$("#pf_name")?.focus(),60)}
@@ -2160,7 +2195,7 @@ function musteri(){
   ${tdebt>0?`<div class="alert" style="margin:0 0 12px;cursor:pointer" onclick="debtList()">جەمئىي نېسى: <b>${fmt(tdebt)}</b> <small style="opacity:.8">· تىزىملىك ‹</small></div>`:""}
   ${S.customers.length?`<button class="btn g" style="width:100%;margin:0 0 12px" onclick="allReport()">${svgI("chart",18)} ئومۇمىي راپور · ھەممە مۇشتەرى</button>`:""}
   ${S.customers.length?`<div class="csearch">${svgI("srch",20)}<input id="q" type="search" inputmode="search" placeholder="ئىسمى ياكى تېلېفون نومۇرى بىلەن ئىزدەش…" value="${esc(Q)}" oninput="srch(this.value)" autocomplete="off">${Q?`<button class="x" aria-label="تازىلاش" onclick="srch('')">✕</button>`:""}</div>${Q?`<div class="foot" style="margin:-4px 4px 8px">${cs.length} مۇشتەرى تېپىلدى</div>`:""}`:""}
-  ${cs.length?`<div class="lst">${cs.map(x=>`<div class="li prow" onclick="selC('${x.c.id}')">${cavD(x.c,44,dcol(x.debt,maxD))}<span class="pmid"><span class="pn">${esc(x.c.name)}</span>${x.c.phone?`<small dir="ltr" style="text-align:right">${esc(x.c.phone)}</small>`:""}${x.debt>0&&x.age!=null?`<small class="${x.age>=LATE?"neg":""}">${x.age?x.age+" كۈندىن بېرى پۇل تاپشۇرمىدى":"بۈگۈن"}</small>`:""}</span><span class="side"><b style="color:${dcol(x.debt,maxD)}">${x.debt>0.004?fmt(x.debt):x.debt<-0.004?"ئالدىن "+fmt(-x.debt):"—"}</b>${x.debt>0.004?`<button class="btn s" onclick="event.stopPropagation();payC('${x.c.id}')">پۇل ئېلىش</button>`:""}</span></div>`).join("")}</div><div class="foot" style="margin-top:8px">سان: مۇشتەرىنىڭ نېسىسى. تەپسىلاتى ئۈچۈن ئىسىمنى بېسىڭ.</div>`:`<div class="empty">تېخى مۇشتەرى يوق.</div>`}`;
+  ${cs.length?`${wheelGen("cl",cs.map(x=>({id:x.c.id,av:cavD(x.c,36,dcol(x.debt,maxD)),title:esc(x.c.name),sub:`<span style="color:${dcol(x.debt,maxD)}">${x.debt>0.004?fmt(x.debt):x.debt<-0.004?"ئالدىن "+fmt(-x.debt):"—"}</span>${x.c.phone?` · <span dir="ltr">${esc(x.c.phone)}</span>`:""}${x.debt>0&&x.age!=null&&x.age>=LATE?` · <span class="neg">${x.age} كۈن</span>`:""}`,act:x.debt>0.004?`<button type="button" class="wa txt" onclick="event.stopPropagation();payC('${x.c.id}')">پۇل ئېلىش</button>`:""})))}<div class="foot" style="margin-top:8px">سان: مۇشتەرىنىڭ نېسىسى. تەپسىلاتى ئۈچۈن ئىسىمنى بېسىڭ.</div>`:`<div class="empty">تېخى مۇشتەرى يوق.</div>`}`;
 }
 
 function detail(d){
@@ -3655,7 +3690,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.36";
+const APP_VER="6.37";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
