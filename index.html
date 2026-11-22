@@ -1283,19 +1283,19 @@ function quickBuy(pid){pIn(pid)}
 
 /* ---------- Kasa ---------- */
 let kCat="",KCATS_=[];
-let kWheel=(()=>{try{return localStorage.getItem("kwheel")!=="0"}catch(e){return true}})(),wSel="";
+let kWheel=(()=>{try{return localStorage.getItem("kwheel")==="1"}catch(e){return false}})(),wSel="";
 const WH=52;
 function wheelHTML(list,st){
   if(!list.length)return "";
   if(!list.some(p=>p.id===wSel))wSel=list[0].id;
-  return `<div class="wheel"><div class="whl" onscroll="whlScroll(this)">${'<div class="wpad"></div>'}${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);return `<div class="wi${p.id===wSel?" on":""}" data-id="${p.id}" onclick="whlTap(this)"><b>${esc(p.name)}</b><small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}${inc?` · ✓ ${fmtN(inc.qty)}`:""}</small></div>`}).join("")}<div class="wpad"></div></div><div class="wband"></div></div><button class="btn" style="width:100%;margin-top:10px" onclick="whlAdd()">＋ سېۋەتكە قوشۇش</button>`;
+  return `<div class="wheel"><div class="whl" onscroll="whlScroll(this)">${'<div class="wpad"></div>'}${list.map(p=>{const inc=cart.find(c=>c.pid===p.id);return `<div class="wi${p.id===wSel?" on":""}" data-id="${p.id}" onclick="whlTap(this)"><b>${esc(p.name)}</b><small>${fmt(num(p.price))} · ${fmtN(st[p.id])} ${esc(unitOf(p))}${inc?` · ✓ ${fmtN(inc.qty)}`:""}</small></div>`}).join("")}<div class="wpad"></div></div><div class="wband"></div></div><div class="cstep" style="margin-top:10px"><button type="button" aria-label="بىرنى ئازايتىش" onclick="if(wSel){cDec(wSel)}">−</button><b id="wq">${fmtN((cart.find(c=>c.pid===wSel)||{qty:0}).qty)}</b><button type="button" aria-label="بىرنى كۆپەيتىش" onclick="whlAdd()">+</button></div>`;
 }
 let whlRaf=0;
 function whlScroll(el){
   if(whlRaf)return;
   whlRaf=requestAnimationFrame(()=>{whlRaf=0;const items=[...el.querySelectorAll(".wi")];if(!items.length)return;
     const i=Math.max(0,Math.min(items.length-1,Math.round(el.scrollTop/WH)));wSel=items[i].dataset.id;
-    items.forEach((x,k)=>x.classList.toggle("on",k===i))});
+    items.forEach((x,k)=>x.classList.toggle("on",k===i));const q=document.getElementById("wq");if(q){const c=cart.find(c=>c.pid===wSel);q.textContent=fmtN(c?c.qty:0)}});
 }
 function whlSync(){
   const el=document.querySelector("#view .whl");if(!el)return;
