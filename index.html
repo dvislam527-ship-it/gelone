@@ -1602,6 +1602,8 @@ const FISCSS=`.fis .xwm{width:min(158px,48%);height:auto;flex:none;display:block
 .fis .xcon{display:block;margin-top:3px;font-size:10.5px;color:#56636c!important;line-height:1.35}.fis .xcon b{font-size:13px;color:#1d2329;font-weight:700;letter-spacing:.02em;display:inline}
 .fis .xt{width:100%;min-width:0;border-collapse:collapse;font-size:11.5px;line-height:1.35;margin:6px 0 4px;table-layout:auto}
 .fis .xt th,.fis .xt td{border:1px solid #8e9aa3!important;padding:4px 5px;white-space:normal;text-align:left;color:#1d2329!important;vertical-align:top;background:#fff}
+.fis .xt tbody tr[data-pc] td{background:rgba(var(--pc),.15)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.fis .xt tbody tr[data-pc] td:first-child{box-shadow:inset 5px 0 0 rgb(var(--pc))}
 .fis .xt thead th{background:#dfe6ea!important;font-weight:700;font-size:10.5px;text-transform:uppercase}
 .fis .xt .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .fis .xt .c{text-align:center;width:22px}
@@ -1649,15 +1651,17 @@ const FISCSS=`.fis .xwm{width:min(158px,48%);height:auto;flex:none;display:block
 .fis[dir=ltr] .is{text-align:left}
 .fis[dir=ltr] .kv dd{text-align:right}
 .fis[dir=ltr] .fh,.fis[dir=ltr] .fx,.fis[dir=ltr] .c{text-align:center}/* fiş telefona sığsın: sabit sütun genişlikleri, daha sıkı boşluklar */.fis .xt{table-layout:fixed;width:100%}.fis .xt thead th.c,.fis .xt td.c{width:8%}.fis .xt thead th.n{width:14%}.fis .xt thead th.n:nth-last-child(2){width:17%}.fis .xt thead th.n:last-child{width:22%}.fis .xt thead th.n:last-child:nth-child(2){width:42%}.fis .xt thead th{overflow-wrap:normal;word-break:keep-all;letter-spacing:0}.fis .xt thead th:nth-child(2):nth-last-child(2){width:auto}.fis .xi th{width:32%}.fis .xt td,.fis .xt th{overflow-wrap:anywhere}.fis .xt .n{white-space:normal}.fis .xt tr.tot td.n{white-space:nowrap;font-size:12.5px}`;
+/* فىشتا تاۋار رەڭگى: گاز كومبى = ئاپېلسىن، ئېلېكترلىك كومبى = كۆك، قالغانلىرى = يېشىل */
+function catRGB(pid){const c=((P(pid)||{}).cat||"");return /^گاز/.test(c)?"232,110,20":/^ئېلېكتر/.test(c)?"31,120,220":"30,150,90"}
 function receiptHTML(r){
   r=rRoot(r);const fam=rFam(r),ids=new Set(fam.map(x=>x.id)),multi=fam.length>1,c=S.customers.find(x=>x.id===r.cid);
   const due=famBal(r),RP=rChain(r).filter(x=>x.alloc),ok=sgOK(r);
   const allL=fam.flatMap(m=>S.sales.filter(x=>x.rid===m.id)),sub=allL.reduce((a,x)=>a+x.qty*x.price,0),disc=fam.reduce((a,m)=>a+num(m.disc),0),tot=fam.reduce((a,m)=>a+num(m.total),0);
   const wars=[];const rets=S.sales.filter(x=>ids.has(x.ret));
   const F=(l,v,cl)=>`<tr class="${cl||""}"><td colspan="4" class="l">${l}</td><td class="n">${v}</td></tr>`;
-  let n=0;
+  let n=0;const pcOf=catRGB;
   const rows=fam.map((m,mi)=>{const L=S.sales.filter(x=>x.rid===m.id);
-    return (mi?`<tr class="grp"><td colspan="5">${rNo(m)} · ${fD(m.date)} ${esc(m.time||"")} · qo'shimcha savdo</td></tr>`:"")+L.map(x=>{const p=P(x.pid)||{},sp=spec(p);n++;return `<tr><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}).join("");
+    return (mi?`<tr class="grp"><td colspan="5">${rNo(m)} · ${fD(m.date)} ${esc(m.time||"")} · qo'shimcha savdo</td></tr>`:"")+L.map(x=>{const p=P(x.pid)||{},sp=spec(p);n++;return `<tr data-pc style="--pc:${pcOf(x.pid)}"><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}).join("");
   const pmL=m=>(m.pm&&m.pm!=="n"?" ("+({k:"karta",h:"o'tkazma"}[m.pm])+")":" (naqd)")+(m.fx?`<small>${fxNote(m.fx)}</small>`:"");
   return `<div class="fis" id="fis" dir="ltr" lang="uz">
   ${xHead("SOTUV CHEKI",[["Chek №",rNo(r)],["Sana",fD(r.date)+" "+esc(r.time||"")+(multi&&fam[fam.length-1].date!==r.date?" — "+fD(fam[fam.length-1].date):"")],r.by?["Sotuvchi",`<span dir="auto">${esc(r.by)}</span>`]:null,c?["Mijoz",`<span dir="auto">${esc(c.name)}</span>`]:null,])}
@@ -1666,11 +1670,12 @@ function receiptHTML(r){
   </tbody><tfoot>
    ${disc?F("Oraliq jami",fmtN(sub))+F("Chegirma","−"+fmtN(disc)):""}
    ${F("JAMI",fmt(tot),"tot")}
-   ${fam.map((m,mi)=>!mi?F("To'landi"+pmL(m),fmtN(m.paid)):num(m.paid)?F(`${rNo(m)} to'landi`+pmL(m),fmtN(m.paid)):"").join("")}
+   ${fam.map((m,mi)=>!mi?F("To'landi · "+fD(m.date)+(m.time?" "+esc(m.time):"")+pmL(m),fmtN(m.paid)):num(m.paid)?F(`${rNo(m)} to'landi · ${fD(m.date)}${m.time?" "+esc(m.time):""}`+pmL(m),fmtN(m.paid)):"").join("")}
    ${!multi&&r.change?F("Qaytim",fmtN(r.change)):""}
-   ${RP.map(p=>F(`${payNo(p)} · ${fD(p.date)} to'lov`,fmtN(r2(p.alloc.filter(a=>ids.has(a.rid)).reduce((t,a)=>t+num(a.a),0))))).join("")}
+   ${RP.map(p=>F(`${payNo(p)} · to'lov qabul qilindi · ${fD(p.date)}${p.time?" "+esc(p.time):""}`+pmL(p),fmtN(r2(p.alloc.filter(a=>ids.has(a.rid)).reduce((t,a)=>t+num(a.a),0))))).join("")}
    ${due>0.004?F("Qoldiq (qarz)",fmtN(due),"debt"):RP.length?F("Qarz to'liq yopildi","0","ok"):""}
   </tfoot></table>
+  ${r.note?`<div class="fn"><b>Izoh:</b> <span dir="auto">${esc(r.note)}</span></div>`:""}
   ${rets.length?`<div class="fn">Qaytarilgan: ${rets.map(x=>`<span dir="auto">${esc(pname(x.pid))}</span> × ${fmtN(-x.qty)} (${fD(x.date)})`).join(", ")}</div>`:""}
   ${ok&&r.sign.debt>0.004?ackHTML(r.sign.debt,0,r.sign.at):due>0.004?ackHTML(due):""}
   ${sigHTML("Sotuvchi","Mijoz",fD(multi?fam[fam.length-1].date:r.date),ok?r.sign:null)}
@@ -1787,7 +1792,7 @@ function xHead(title,rows){
 
 function showR(id,fresh){
   const r0=S.receipts.find(x=>x.id===id);if(!r0)return;const r=rRoot(r0);
-  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>سېتىش تاماملاندى</b><small>چەك ${rNo(r0)} ساقلاندى · ${fmt(r0.total)}${r0.par?" · "+rNo(r)+" چېكىگە قوشۇلدى":""}</small></div></div>`:"")+receiptHTML(r)+lossBox(r)+signBtns("r",r)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareR('${r.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlR('${r.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="btn s g" onclick="retR('${r.id}')">تاۋار قايتۇرۇش</button></div><div class="row noprint" style="margin-top:6px;justify-content:space-between"><button class="x e" onclick="editFamDate('${r.id}')">✎ چېسلانى تۈزىتىش</button><button class="x" title="چەكنى بىكار قىلىش" onclick="voidR('${r.id}')">چەكنى بىكار قىلىش</button></div><div id="rmsg" class="foot noprint"></div>`;
+  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>سېتىش تاماملاندى</b><small>چەك ${rNo(r0)} ساقلاندى · ${fmt(r0.total)}${r0.par?" · "+rNo(r)+" چېكىگە قوشۇلدى":""}</small></div></div>`:"")+receiptHTML(r)+lossBox(r)+signBtns("r",r)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareR('${r.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlR('${r.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="btn s g" onclick="retR('${r.id}')">تاۋار قايتۇرۇش</button></div><div class="row noprint" style="margin-top:6px;justify-content:space-between"><button class="x e" onclick="editFamDate('${r.id}')">✎ چېسلانى تۈزىتىش</button><button class="x e" onclick="editRNote('${r.id}')">✎ ئىزاھات</button><button class="x" title="چەكنى بىكار قىلىش" onclick="voidR('${r.id}')">چەكنى بىكار قىلىش</button></div><div id="rmsg" class="foot noprint"></div>`;
   $("#modal").classList.add("on");
 }
 function closeM(){$("#modal").classList.remove("on");stopCam();if(tab==="kasa")$("#bc")?.focus()}
@@ -1795,7 +1800,7 @@ function printR(){try{window.print()}catch(e){}setTimeout(()=>{$("#rmsg").textCo
 function rText(r){
   r=rRoot(r);const fam=rFam(r),ids=new Set(fam.map(x=>x.id)),due=famBal(r),RP=rChain(r).filter(x=>x.alloc),disc=fam.reduce((a,m)=>a+num(m.disc),0),tot=fam.reduce((a,m)=>a+num(m.total),0);
   const lines=fam.flatMap((m,mi)=>[mi?`— ${rNo(m)} · ${fD(m.date)} —`:"",...S.sales.filter(x=>x.rid===m.id).map(x=>{const p=P(x.pid)||{};return `${pname(x.pid)}${spec(p)?" ("+spec(p)+")":""}\n  ${fmtN(x.qty)} × ${fmtN(x.price)} = ${fmtN(x.qty*x.price)}`})]);
-  return [S.shop||"Savdo cheki","Tel/Telegram/WhatsApp: "+(S.phone||DEF_PHONE),`Chek № ${rNo(r)}  ${fD(r.date)} ${r.time||""}`,r.cid?"Mijoz: "+cname(r.cid):"","-----",...lines,"-----",disc?"Chegirma: -"+fmtN(disc):"","JAMI: "+fmtN(tot)+" "+S.cur,...fam.map((m,mi)=>!mi?"To'landi: "+fmtN(m.paid)+(m.fx?" ("+fxNote(m.fx)+")":""):num(m.paid)?rNo(m)+" to'landi: "+fmtN(m.paid):""),...RP.map(p=>payNo(p)+" ("+fD(p.date)+"): "+fmtN(r2(p.alloc.filter(a=>ids.has(a.rid)).reduce((t,a)=>t+num(a.a),0)))),due>0.004?"Qoldiq (qarz): "+fmtN(due):"","Xaridingiz uchun rahmat!"].filter(Boolean).join("\n");
+  return [S.shop||"Savdo cheki","Tel/Telegram/WhatsApp: "+(S.phone||DEF_PHONE),`Chek № ${rNo(r)}  ${fD(r.date)} ${r.time||""}`,r.cid?"Mijoz: "+cname(r.cid):"",r.note?"Izoh: "+r.note:"","-----",...lines,"-----",disc?"Chegirma: -"+fmtN(disc):"","JAMI: "+fmtN(tot)+" "+S.cur,...fam.map((m,mi)=>!mi?"To'landi: "+fmtN(m.paid)+(m.fx?" ("+fxNote(m.fx)+")":""):num(m.paid)?rNo(m)+" to'landi: "+fmtN(m.paid):""),...RP.map(p=>payNo(p)+" ("+fD(p.date)+"): "+fmtN(r2(p.alloc.filter(a=>ids.has(a.rid)).reduce((t,a)=>t+num(a.a),0)))),due>0.004?"Qoldiq (qarz): "+fmtN(due):"","Xaridingiz uchun rahmat!"].filter(Boolean).join("\n");
 }
 
 /* ---------- پۇل تاپشۇرۇۋېلىش چېكى (To'lov cheki) · ھەر بىرىنىڭ ئۆز نومۇرى ---------- */
@@ -1847,7 +1852,7 @@ function payGoods(p){
   return roots.map(R=>{const fam=famAt(R,p);let n=0;const L=fam.flatMap(m=>S.sales.filter(x=>x.rid===m.id)),q=L.reduce((a,x)=>a+num(x.qty),0),tot=fam.reduce((a,m)=>a+num(m.total),0),disc=fam.reduce((a,m)=>a+num(m.disc),0);
     if(!L.length)return "";
     return `<table class="xt"><thead><tr><th class="c">№</th><th>Mahsulot · ${rNo(R)}</th><th class="n">Soni</th><th class="n">Narxi</th><th class="n">Summa</th></tr></thead><tbody>
-    ${L.map(x=>{const pr=P(x.pid)||{},sp=spec(pr);n++;return `<tr><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}
+    ${L.map(x=>{const pr=P(x.pid)||{},sp=spec(pr);n++;return `<tr data-pc style="--pc:${catRGB(x.pid)}"><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}
     </tbody><tfoot>${disc?`<tr><td colspan="4" class="l">Chegirma</td><td class="n">−${fmtN(disc)}</td></tr>`:""}<tr class="tot"><td colspan="4" class="l">${n} xil · ${fmtN(q)} dona · JAMI</td><td class="n">${fmt(tot)}</td></tr></tfoot></table>`}).join("");
 }
 /* <div><span>A</span><span>B</span></div> قۇرلىرىنى جەدۋەلگە ئايلاندۇرۇش */
@@ -2431,6 +2436,10 @@ async function payC(id){
 /* خاتىرىنىڭ چېسلاسىنى تۈزىتىش (سېتىش چېكى، پۇل تاپشۇرۇش، قايتۇرۇش) */
 const okDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||"")?d:today();
 /* بىر نېسى چېكى زەنجىرىدە كۆپ سېتىش/پۇل بولسا، قايسىسىنىڭ چېسلاسىنى تۈزىتىشنى تاللىتىدۇ */
+async function editRNote(id){
+  const R0=S.receipts.find(x=>x.id===id);if(!R0)return;const R=rRoot(R0);
+  const f=await form("چەككە ئىزاھات",[{n:"w",l:"ئىزاھات (چەكتە كۆرۈنىدۇ)",v:R.note||"",ta:1}],"ساقلاش");
+  if(!f)return;R.note=String(f.w||"").trim();if(!R.note)delete R.note;go();showR(R.id)}
 async function editFamDate(id){
   const R=S.receipts.find(x=>x.id===id);if(!R)return;
   const fam=rFam(R),ch=rChain(R);
@@ -3690,7 +3699,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.37";
+const APP_VER="6.38";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
