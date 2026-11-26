@@ -1708,7 +1708,7 @@ function signPad(k,id){
    <p class="sgt">Mijoz, iltimos, quyidagi oq maydonga barmog'ingiz bilan imzo qo'ying.${due>0.004?` Imzo bilan siz ${fmt(due)} qarzni tasdiqlaysiz.`:""}</p>
    <canvas id="sgc"></canvas>
    <div class="sgrow"><button class="btn s g" onclick="sgClear()">Tozalash · تازىلاش</button>
-   <label class="btn s g sgcam">${SG.stamp?"✓ ":""}📷 Muhr rasmi · مۆھۈر<input type="file" accept="image/*" capture="environment" onchange="sgStamp(this)" hidden></label></div>
+   <label class="btn s g sgcam">${SG.stamp?"✓ ":""}📷 Muhr rasmi · مۆھۈر<input type="file" accept="image/*" onchange="sgStamp(this)" hidden></label></div>
    <div id="sgprev" class="sgprev">${SG.stamp?`<img src="${SG.stamp}" alt=""><button class="x" onclick="sgNoStamp()">✕</button>`:""}</div>
    <p class="sgn" dir="rtl">مۆھۈر ئىختىيارىي: خېرىدار مۆھۈرىنى ئاق قەغەزگە بېسىپ بەرسە، رەسىمگە تارتىڭ.</p>
    <div class="row" style="margin-top:12px"><button class="btn g" onclick="sgBack()">بىكار قىلىش</button><button class="btn" onclick="sgSave()">ساقلاش</button></div></div>`;
@@ -2004,7 +2004,7 @@ function pForm(){
     <div class="pfh-r">
       <label>تاۋار نامى<input id="pf_name" name="name" required value="${esc(v.name)}" placeholder="مەسىلەن: Demirdöküm Nitromix كومبى" autocomplete="off"></label>
       <div class="swatches" role="group" aria-label="رەڭ">${PCOL.map(c=>`<button type="button" class="sw ${v.color===c&&!v.img?"on":""}" style="background:${c}" aria-label="رەڭ" onclick="pfSet('color','${c}',1)"></button>`).join("")}</div>
-      ${AS?`<div class="row"><label class="btn s g phbtn">${pfBusy?"يۈكلىنىۋاتىدۇ…":v.img?"رەسىمنى ئالماشتۇرۇش":"رەسىم قوشۇش"}<input type="file" accept="image/*" capture="environment" hidden onchange="pfPhoto(this)"></label>${v.img?`<button type="button" class="x" onclick="pfSet('img','')">رەسىمنى ئېلىۋېتىش</button>`:""}</div>`:""}
+      ${AS?`<div class="row"><label class="btn s g phbtn">${pfBusy?"يۈكلىنىۋاتىدۇ…":v.img?"رەسىمنى ئالماشتۇرۇش":"رەسىم قوشۇش"}<input type="file" accept="image/*" hidden onchange="pfPhoto(this)"></label>${v.img?`<button type="button" class="x" onclick="pfSet('img','')">رەسىمنى ئېلىۋېتىش</button>`:""}</div>`:""}
     </div>
   </div>
 
@@ -3203,7 +3203,7 @@ async function upImg(file,max){
 }
 function cPhotoPick(cid,isMain){
   if(!AS){note("رەسىم قوشۇش بۇ يەردە ئىشلىمەيدۇ.");return}
-  const i=document.createElement("input");i.type="file";i.accept="image/*";if(isMain)i.capture="user";i.multiple=!isMain;
+  const i=document.createElement("input");i.type="file";i.accept="image/*";i.multiple=!isMain;
   i.onchange=async()=>{const fs=[...i.files];if(!fs.length)return;const c=S.customers.find(x=>x.id===cid);if(!c)return;toast("رەسىم يۈكلىنىۋاتىدۇ…");
     try{for(const f of fs){const id=await upImg(f,isMain?400:1200);if(isMain)c.img=id;else(c.photos=c.photos||[]).push({id,date:today(),note:""})}go();toast(isMain?"رەسىم ساقلاندى":fs.length+" رەسىم قوشۇلدى")}
     catch(e){note("رەسىمنى ساقلىغىلى بولمىدى. قايتا سىناڭ.")}};
@@ -3699,7 +3699,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.38";
+const APP_VER="6.39";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
