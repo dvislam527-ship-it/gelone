@@ -138,7 +138,7 @@ th{font-size:13px;color:var(--mute);font-weight:500}
 .sgpad{display:grid;gap:8px}.sgh{font-size:15px}.sgd{color:var(--bad);margin-top:2px}.sgt{margin:0;font-size:14px;line-height:1.45}.sgn{margin:0;font-size:12.5px;color:var(--mute)}
 #sgc{width:100%;height:220px;background:#fff;border:2px dashed #8e9aa3;border-radius:12px;touch-action:none;display:block}
 .sgrow{display:flex;gap:8px;flex-wrap:wrap}.sgcam{cursor:pointer}.sgprev{display:flex;align-items:center;gap:8px}.sgprev img{max-height:70px;border-radius:6px;border:1px solid var(--line)}
-.shs{display:grid;gap:10px}.sht{font-size:16px}.shs a.btn{text-align:center;text-decoration:none}.shn{margin:0;font-size:13.5px;color:var(--mute);line-height:1.5}.shok{margin:0;color:var(--ok);font-weight:700}.shta{width:100%;min-height:150px;font:13px/1.4 monospace;box-sizing:border-box}.shpic{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;-webkit-touch-callout:default;user-select:auto}#shout{display:grid;gap:8px}#shout:empty{display:none}
+.shs{display:grid;gap:10px}.sht{font-size:16px}.shs a.btn{text-align:center;text-decoration:none}.shs .shmain{font-size:17px;padding:15px 14px}.shn{margin:0;font-size:13.5px;color:var(--mute);line-height:1.5}.shok{margin:0;color:var(--ok);font-weight:700}.shta{width:100%;min-height:150px;font:13px/1.4 monospace;box-sizing:border-box}.shpic{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;-webkit-touch-callout:default;user-select:auto}#shout{display:grid;gap:8px}#shout:empty{display:none}
 .joinbox{display:grid;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}.joinbox .foot{margin:0}
 .jseg{display:flex;flex-wrap:wrap;gap:8px}.jseg button{flex:1 1 140px;display:grid;gap:2px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}.jseg button small{color:var(--mute);font-size:12px}.jseg button.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);background:var(--panel)}
 .fis tr.grp td{background:#eef2f5;font-size:11px;font-weight:700;color:#1d2329;padding:4px 6px}
@@ -1918,17 +1918,10 @@ async function tgCopyImg(){const o=$("#shout");if(o)o.innerHTML=`<p class="shn">
 }
 function shareSheet(k,id){
   const o=signObj(k,id);if(!o)return;const t=k==="r"?rText(o):pText(o),c=S.customers.find(x=>x.id===o.cid)||{};SH={k,id,t};
-  SH.blobP=rImgBlob(k,id);SH.blobP.catch(()=>{});
   const wa=waLink(c.phone,t)||`https://wa.me/?text=${encodeURIComponent(t)}`,tg=`https://t.me/share/url?url=${encodeURIComponent(t)}`,tc=tgChatURL(c.phone);
   return dlgOpen(`<div class="shs"><b class="sht">چەكنى ئەۋەتىش · ${k==="r"?rNo(o):payNo(o)}</b>
-   <div class="tgq"><b>⚡ Telegram غا رەسىم ئەۋەتىش</b>
-    <button class="btn" onclick="tgCopyImg()">① 📋 رەسىمنى كۆچۈرۈش</button>
-    <a class="btn" href="${esc(`https://t.me/share/url?url=${encodeURIComponent((k==="r"?"Chek ":"To'lov cheki ")+(k==="r"?rNo(o):payNo(o))+" · "+(S.shop||"Gelone"))}`)}" target="_blank" rel="noopener">② Telegram دا مۇشتەرىنى تاللاش</a>
-    <small>③ مۇشتەرىنى تاللىغاندىن كېيىن خەت يازىدىغان يەرنى بېسىپ تۇرۇپ «Вставить / Paste» نى بېسىڭ — رەسىم چىقىدۇ، ئەۋەتىڭ.</small>
-    ${tc?`<a class="foot" href="${esc(tc)}" target="_blank" rel="noopener" style="text-align:center">ياكى بىۋاسىتە <span dir="auto">${esc(c.name||"")}</span> نىڭ سۆھبىتىنى ئېچىش ↗</a>`:""}</div>
-   <button class="btn g shimg" onclick="imgOut('${k}','${id}')">🖼 رەسىم قىلىپ ساقلاش${o.sign?" (ئىمزا بىلەن)":""}</button>
-   <a class="btn g" href="${esc(tg)}" target="_blank" rel="noopener">Telegram (تېكىست)</a>
-   <a class="btn g" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp (تېكىست)</a>
+   <button class="btn shmain" onclick="imgOut('${k}','${id}')">📤 چەكنى ئەۋەتىش${o.sign?" (ئىمزا بىلەن)":""}</button>
+   <a class="btn g" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp${c.phone?" · "+esc(c.name||""):""}</a>
    <button class="btn g" onclick="shCopy()">📋 تېكىستنى كۆچۈرۈش</button>
    <div id="shout"></div>
    <button class="btn g" onclick="dlgClose(null)">تاقاش</button></div>`);
@@ -3699,7 +3692,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.39";
+const APP_VER="6.40";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
