@@ -2418,7 +2418,7 @@ function addC(e){e.preventDefault();const f=e.target;S.customers.push({id:uid(),
 async function payC(id){
   const O=openR(id),fields=[];
   if(O.length)fields.push({n:"r",l:"قايسى چەكنىڭ پۇلى؟",v:O[0].id,opts:O.map(r=>[r.id,rNo(r)+" · "+fD(r.date)+" · قالدۇق "+fmtN(rBal(r))])});
-  fields.push({n:"cu",l:"قايسى پۇل؟",v:"usd",opts:[["usd","$ دوللار"],["uzs","سوم"]]},{n:"a",l:"قانچە پۇل ئالدىڭىز؟",v:O.length===1?String(rBal(O[0])):"",num:1,req:1},{n:"rt",l:"كۇرس: 1 $ = ? سوم (پەقەت سوم ئۈچۈن)",v:getRate()?String(getRate()):"",num:1},{n:"pm",l:"قانداق؟",v:"n",opts:pmOpts()},{n:"d",l:"چېسلا",v:today(),type:"date",req:1});
+  fields.push({n:"cu",l:"قايسى پۇل؟",v:"usd",opts:[["usd","$ دوللار"],["uzs","سوم"]]},{n:"a",l:"قانچە پۇل ئالدىڭىز؟",v:O.length===1?String(rBal(O[0])):"",num:1,req:1},{n:"rt",l:"كۇرس: 1 $ = ? سوم (پەقەت سوم ئۈچۈن)",v:getRate()?String(getRate()):"",num:1},{n:"pm",l:"قانداق؟",v:"n",opts:pmOpts()},{n:"d",l:"چېسلا",v:today(),type:"date",req:1},{n:"w",l:"ئىزاھات (چەكتە كۆرۈنىدۇ)",v:"",ta:1});
   const _db=(cust().find(x=>x.c.id===id)||{debt:0}).debt,_adv=!O.length&&_db<=0.004;
   const f=await form((_adv?"ئالدىن پۇل ئېلىش — ":"پۇل ئېلىش — ")+cname(id),fields,"ساقلاش");if(!f||!num(f.a))return;
   if(_adv&&!await ask("بۇ مۇشتەرىنىڭ ئوچۇق قەرزى يوق.\nئالغان "+fmtN(num(f.a))+" پۇل «ئالدىن تۆلەش (ئاۋانس)» بولۇپ ساقلىنىدۇ ۋە كېيىن تاۋار بەرگەندە شۇنىڭدىن چۈشىدۇ.\nماقۇلمۇ؟","ھەئە، ساقلا"))return;
@@ -2428,7 +2428,7 @@ async function payC(id){
   /* تاللانغان چەكتىن باشلاپ، ئارتۇقى كونا چەكلەرگە */
   let rest=amt;const ord=O.length?[O.find(r=>r.id===f.r)||O[0],...O.filter(r=>r.id!==f.r)]:[];
   for(const r of ord){if(rest<=0.004)break;const b=rBal(r),a=r2(Math.min(b,rest));if(a>0){alloc.push({rid:r.id,a,left:r2(b-a)});rest=r2(rest-a)}}
-  S.payments.push({id:pid_,no:nextP(),before,after:r2(before-amt),alloc,cid:id,by:WHO(),amount:amt,date:okDate(f.d),time:nowT(),ts:Date.now(),pm:f.pm||"n",...(fx?{fx}:{})});go();showP(pid_,1)}
+  S.payments.push({id:pid_,no:nextP(),before,after:r2(before-amt),alloc,cid:id,by:WHO(),amount:amt,date:okDate(f.d),time:nowT(),ts:Date.now(),pm:f.pm||"n",...(String(f.w||"").trim()?{note:String(f.w).trim()}:{}),...(fx?{fx}:{})});go();showP(pid_,1)}
 /* خاتىرىنىڭ چېسلاسىنى تۈزىتىش (سېتىش چېكى، پۇل تاپشۇرۇش، قايتۇرۇش) */
 const okDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||"")?d:today();
 /* بىر نېسى چېكى زەنجىرىدە كۆپ سېتىش/پۇل بولسا، قايسىسىنىڭ چېسلاسىنى تۈزىتىشنى تاللىتىدۇ */
@@ -3699,7 +3699,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.44";
+const APP_VER="6.45";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
