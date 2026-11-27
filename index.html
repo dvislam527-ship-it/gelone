@@ -2621,7 +2621,7 @@ function custExtra(d,debt){
   const sv=S.services.filter(x=>x.cid===d.id).sort((a,b)=>b.no-a.no);
   if(false)h+=`<div class="sec" style="border-radius:12px 12px 0 0"><span>رېمونتلار</span><span>${sv.length}</span></div><div class="lst" style="border-radius:0 0 16px 16px;margin-bottom:12px">${sv.slice(0,6).map(svcRow).join("")}</div>`;
   const war=bought(d.id).filter(x=>num((P(x.pid)||{}).war)).slice(0,8);
-  if(war.length)h+=`<div class="sec" style="border-radius:12px 12px 0 0"><span>كاپالەتلىك تاۋارلار</span><span></span></div><div class="lst" style="border-radius:0 0 16px 16px;margin-bottom:12px">${war.map(x=>`<div class="li" style="cursor:default"><span>${esc(pname(x.pid))} × ${fmtN(x.qty)}<small>سېتىلغان ${fD(x.date)} · ${warTag(warEnd(x))}</small></span></div>`).join("")}</div>`;
+  if(false&&war.length)h+=`<div class="sec" style="border-radius:12px 12px 0 0"><span>كاپالەتلىك تاۋارلار</span><span></span></div><div class="lst" style="border-radius:0 0 16px 16px;margin-bottom:12px">${war.map(x=>`<div class="li" style="cursor:default"><span>${esc(pname(x.pid))} × ${fmtN(x.qty)}<small>سېتىلغان ${fD(x.date)} · ${warTag(warEnd(x))}</small></span></div>`).join("")}</div>`;
   return h;
 }
 async function delPay(id){if(!await ask("بۇ پۇل تاپشۇرۇش خاتىرىسى ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;logDel("payments",S.payments.find(x=>x.id===id));S.payments=S.payments.filter(x=>x.id!==id);closeM();go()}
@@ -3699,7 +3699,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.43";
+const APP_VER="6.44";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
