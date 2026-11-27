@@ -1754,8 +1754,23 @@ function needH2C(){
   H2C=new Promise((ok,no)=>{let i=0;const nx=()=>{if(i>=src.length){H2C=null;no(new Error("lib"));return}const s=document.createElement("script");s.src=src[i++];s.onload=()=>window.html2canvas?ok(window.html2canvas):nx();s.onerror=nx;document.head.appendChild(s)};nx()});
   return H2C;
 }
+async function imgBuild(k,id,o){
+  const h=await needH2C(),box=document.createElement("div");box.style.cssText="position:fixed;left:-9999px;top:0;width:360px;background:#fff";
+  box.innerHTML=k==="r"?receiptHTML(o):payHTML(o);const st=document.createElement("style");st.textContent=FISCSS;box.prepend(st);document.body.appendChild(box);
+  let cv;try{cv=await h(box.querySelector(".fis"),{backgroundColor:"#ffffff",scale:2.5,logging:false,useCORS:true})}finally{box.remove()}
+  const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+  return {blob,cv,name:`chek-${(k==="r"?rNo(o):payNo(o)).replace("/","-")}.png`};
+}
+/* iPhone: ھەمبەھىرلەش كۇنوپكىسى بېسىلغان ھامان ئىشلىشى كېرەك، شۇڭا رەسىمنى ئالدىن تەييارلاپ قويىمىز */
+function imgPrep(k,id){const o=signObj(k,id);if(!o)return;const tok=SH;
+  tok.rk=k+":"+id;tok.ready=null;tok.pre=imgBuild(k,id,o).then(r=>{if(SH===tok){tok.ready=r}return r}).catch(()=>null)}
 async function imgOut(k,id){
   const o=signObj(k,id);if(!o)return;
+  if(SH&&SH.rk===k+":"+id&&SH.ready&&!(window.AndroidApp&&AndroidApp.shareImage)){
+    const R=SH.ready,f=new File([R.blob],R.name,{type:"image/png"});
+    const inDlg=$("#dlg.on")&&$("#shout");const say=h=>{if(inDlg)$("#shout").innerHTML=h};
+    try{if(navigator.canShare&&navigator.canShare({files:[f]})){const pr=navigator.share({files:[f]});pr.then(()=>say(`<p class="shok">✓ ئەۋەتىلدى.</p>`),e=>{if(e&&e.name==="AbortError"){say("");return}SH=Object.assign(SH||{},{blob:R.blob,name:R.name});imgDeliver(R.blob,R.name,R.cv.toDataURL("image/png"),say)});return}}catch(e){}
+    SH=Object.assign(SH||{},{blob:R.blob,name:R.name});await imgDeliver(R.blob,R.name,R.cv.toDataURL("image/png"),say);return}
   const inDlg=$("#dlg.on")&&$("#shout");const say=h=>{if(inDlg)$("#shout").innerHTML=h;else{const m=$("#rmsg");if(m)m.innerHTML=h}};
   say(`<p class="shn">رەسىم تەييارلىنىۋاتىدۇ…</p>`);
   const name=`chek-${(k==="r"?rNo(o):payNo(o)).replace("/","-")}.png`;
@@ -1782,7 +1797,7 @@ async function imgDeliver(blob,name,url,say){
   say(`<p class="shn">رەسىم تەييار. «ساقلاش» نى تەستىقلاڭ…</p>${pic}`);
   const r=await imgSaveRaw(blob,name);
   if(r.ok){say(`<p class="shok">✓ رەسىم ساقلاندى (${esc(name)}).</p><p class="shn">Telegram نى ئېچىپ 📎 → «Fayl / Файл» ياكى «Galereya» دىن شۇ رەسىمنى تاللاپ ئەۋەتىڭ.</p>${pic}`);return}
-  say(`<p class="shn">${DLMSG[r.code]||"ساقلىغىلى بولمىدى."} <small dir="ltr">(${esc(r.code||"")})</small></p><button class="btn" onclick="imgSave()">⬇ رەسىمنى قايتا ساقلاش</button><p class="shn">ياكى رەسىمنى بېسىپ تۇرۇپ «Save Image / Сохранить» نى تاللاڭ:</p>${pic}`);
+  say(`<p class="shn">${DLMSG[r.code]||"ساقلىغىلى بولمىدى."} <small dir="ltr">(${esc(r.code||"")})</small></p><a class="btn" href="${url}" download="${esc(name)}">⬇ رەسىمنى چۈشۈرۈش</a><p class="shn">ياكى رەسىمنى بېسىپ تۇرۇپ «Save Image / Сохранить» نى تاللاڭ:</p>${pic}`);
 }
 async function imgSave(){if(!SH||!SH.blob)return;const o=$("#shout")||$("#rmsg");const say=h=>{if(o)o.innerHTML=h};await imgDeliver(SH.blob,SH.name,URL.createObjectURL(SH.blob),say)}
 function xHead(title,rows){
@@ -1922,13 +1937,14 @@ async function tgCopyImg(){const o=$("#shout");if(o)o.innerHTML=`<p class="shn">
 function shareSheet(k,id){
   const o=signObj(k,id);if(!o)return;const t=k==="r"?rText(o):pText(o),c=S.customers.find(x=>x.id===o.cid)||{};SH={k,id,t};
   const wa=waLink(c.phone,t)||`https://wa.me/?text=${encodeURIComponent(t)}`,tg=`https://t.me/share/url?url=${encodeURIComponent(t)}`,tc=tgChatURL(c.phone);
-  return dlgOpen(`<div class="shs"><b class="sht">چەكنى ئەۋەتىش · ${k==="r"?rNo(o):payNo(o)}</b>
+  const _p=dlgOpen(`<div class="shs"><b class="sht">چەكنى ئەۋەتىش · ${k==="r"?rNo(o):payNo(o)}</b>
    <button class="btn shmain" onclick="imgOut('${k}','${id}')">📤 چەكنى ئەۋەتىش${o.sign?" (ئىمزا بىلەن)":""}</button>
    <a class="btn g" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp${c.phone?" · "+esc(c.name||""):""}</a>
    <a class="btn g" href="${esc(tc||tg)}" target="_blank" rel="noopener" onclick="try{navigator.clipboard.writeText(SH.t)}catch(e){}">Telegram${c.phone?" · "+esc(c.name||""):""}</a>
    <button class="btn g" onclick="shCopy()">📋 تېكىستنى كۆچۈرۈش</button>
    <div id="shout"></div>
    <button class="btn g" onclick="dlgClose(null)">تاقاش</button></div>`);
+  imgPrep(k,id);return _p;
 }
 async function shCopy(){const t=SH&&SH.t;if(!t)return;
   if(window.AndroidApp&&AndroidApp.share){AndroidApp.share(t);return}
@@ -3700,7 +3716,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.47";
+const APP_VER="6.48";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
