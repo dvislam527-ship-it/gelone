@@ -1926,7 +1926,8 @@ async function rImgBlob(k,id){
   return await new Promise(r=>cv.toBlob(r,"image/png"));
 }
 /* مۇشتەرى نومۇرى بىلەن Telegram سۆھبىتىنى ئېچىش */
-function tgChatURL(phone){let d=String(phone||"").replace(/[^\d]/g,"");if(!d)return "";if(d.length===9)d="998"+d;return "https://t.me/+"+d}
+const IS_DESK=/Windows NT|Macintosh/.test(navigator.userAgent)&&!(navigator.maxTouchPoints>1);
+function tgChatURL(phone){let d=String(phone||"").replace(/[^\d]/g,"");if(!d)return "";if(d.length===9)d="998"+d;return IS_DESK?"tg://resolve?phone="+d:"https://t.me/+"+d}
 async function tgCopyImg(){const o=$("#shout");if(o)o.innerHTML=`<p class="shn">رەسىم تەييارلىنىۋاتىدۇ…</p>`;
   try{
     if(!(navigator.clipboard&&navigator.clipboard.write&&window.ClipboardItem))throw new Error("no");
@@ -1936,16 +1937,24 @@ async function tgCopyImg(){const o=$("#shout");if(o)o.innerHTML=`<p class="shn">
 }
 function shareSheet(k,id){
   const o=signObj(k,id);if(!o)return;const t=k==="r"?rText(o):pText(o),c=S.customers.find(x=>x.id===o.cid)||{};SH={k,id,t};
-  const wa=waLink(c.phone,t)||`https://wa.me/?text=${encodeURIComponent(t)}`,tg=`https://t.me/share/url?url=${encodeURIComponent(t)}`,tc=tgChatURL(c.phone);
+  const wa=waLink(c.phone,t)||`https://wa.me/?text=${encodeURIComponent(t)}`,tg=(IS_DESK?"tg://msg?text=":"https://t.me/share/url?url=")+encodeURIComponent(t),tc=tgChatURL(c.phone);
   const _p=dlgOpen(`<div class="shs"><b class="sht">چەكنى ئەۋەتىش · ${k==="r"?rNo(o):payNo(o)}</b>
    <button class="btn shmain" onclick="imgOut('${k}','${id}')">📤 چەكنى ئەۋەتىش${o.sign?" (ئىمزا بىلەن)":""}</button>
    <a class="btn g" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp${c.phone?" · "+esc(c.name||""):""}</a>
+   ${IS_DESK&&window.ClipboardItem?`<button class="btn g" onclick="imgCopy()">🖼 رەسىمنى كۆچۈرۈش (Ctrl+V)</button>`:""}
    <a class="btn g" href="${esc(tc||tg)}" target="_blank" rel="noopener" onclick="try{navigator.clipboard.writeText(SH.t)}catch(e){}">Telegram${c.phone?" · "+esc(c.name||""):""}</a>
    <button class="btn g" onclick="shCopy()">📋 تېكىستنى كۆچۈرۈش</button>
    <div id="shout"></div>
    <button class="btn g" onclick="dlgClose(null)">تاقاش</button></div>`);
   imgPrep(k,id);return _p;
 }
+async function imgCopy(){
+  const say=h=>{const o=$("#shout");if(o)o.innerHTML=h};
+  try{say(`<p class="shn">رەسىم تەييارلىنىۋاتىدۇ…</p>`);
+    const R=SH&&SH.ready||(SH&&SH.pre&&await SH.pre);if(!R)throw 0;
+    await navigator.clipboard.write([new ClipboardItem({"image/png":R.blob})]);
+    say(`<p class="shok">✓ رەسىم كۆچۈرۈلدى. Telegram نى ئېچىپ سۆھبەتكە Ctrl+V بېسىڭ.</p>`)}
+  catch(e){say(`<p class="shn">رەسىمنى كۆچۈرگىلى بولمىدى. «📤 چەكنى ئەۋەتىش» نى بېسىپ رەسىمنى چۈشۈرۈڭ.</p>`)}}
 async function shCopy(){const t=SH&&SH.t;if(!t)return;
   if(window.AndroidApp&&AndroidApp.share){AndroidApp.share(t);return}
   try{await navigator.clipboard.writeText(t);$("#shout").innerHTML=`<p class="shok">✓ كۆچۈرۈلدى. ئەمدى Telegram غا چاپلاڭ.</p>`}
@@ -3716,7 +3725,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.48";
+const APP_VER="6.49";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
