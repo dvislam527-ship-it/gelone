@@ -1925,6 +1925,7 @@ function shareSheet(k,id){
   return dlgOpen(`<div class="shs"><b class="sht">چەكنى ئەۋەتىش · ${k==="r"?rNo(o):payNo(o)}</b>
    <button class="btn shmain" onclick="imgOut('${k}','${id}')">📤 چەكنى ئەۋەتىش${o.sign?" (ئىمزا بىلەن)":""}</button>
    <a class="btn g" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp${c.phone?" · "+esc(c.name||""):""}</a>
+   <a class="btn g" href="${esc(tc||tg)}" target="_blank" rel="noopener" onclick="try{navigator.clipboard.writeText(SH.t)}catch(e){}">Telegram${c.phone?" · "+esc(c.name||""):""}</a>
    <button class="btn g" onclick="shCopy()">📋 تېكىستنى كۆچۈرۈش</button>
    <div id="shout"></div>
    <button class="btn g" onclick="dlgClose(null)">تاقاش</button></div>`);
@@ -3699,7 +3700,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.45";
+const APP_VER="6.46";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
