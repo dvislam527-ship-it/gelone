@@ -937,7 +937,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 
 
 <script>
-const TABS=[["panel","باش بەت"],["kasa","سېتىش"],["urun","تاۋارلار"],["sandoq","پۇل ساندۇقى"],["hesap","ھېساباتلىشىش"],["musteri","مۇشتەرى ۋە نېسى"],["alis","مال كىرگۈزۈش"],["gider","چىقىملار"],["islem","بارلىق خاتىرىلەر"],["rapor","دوكلاتلار"],["ayar","تەڭشەكلەر"]];
+const TABS=[["panel","باش بەت"],["kasa","سېتىش"],["urun","تاۋارلار"],["sandoq","پۇل ساندۇقى"],["hesap","ھېساباتلىشىش"],["musteri","مۇشتەرى ۋە نېسى"],["alis","مال كىرگۈزۈش"],["gider","چىقىملار"],["islem","بارلىق خاتىرىلەر"],["rapor","دوكلاتلار"],["not","Not"],["ayar","تەڭشەكلەر"]];
 const KEY="stok-ug-v2";
 const blank=()=>({cur:"₺",shop:"",addr:"",phone:"",products:[],buys:[],sales:[],receipts:[],expenses:[],customers:[],payments:[],trash:[],services:[],ustas:[],seq:0,sseq:0,pseq:0,rates:{}});
 let S=blank(),tab="panel",docRef=null,saveT=null,Q="",sel=null;
@@ -1124,10 +1124,10 @@ function render(){
   const mb=k=>{const t=TABS.find(x=>x[0]===k);return t?`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(TICON[k],22)}${t[1]}</button>`:""};
   $("#dw").innerHTML=`<h3>${esc(S.shop||"دۇكىنىم")}${st?`<small class="role">خىزمەتچى ھالىتى</small>`:""}</h3>`
     +`<div class="dwg">كۈندىلىك ئىشلار</div>`+["panel","kasa","urun","musteri"].map(mb).join("")
-    +(CAN("rep")?`<div class="dwg">باشقۇرۇش</div>`+["gider","hesap","islem","rapor"].map(mb).join(""):"")
+    +(CAN("rep")?`<div class="dwg">باشقۇرۇش</div>`+["gider","hesap","not","islem","rapor"].map(mb).join(""):"")
     +`<div class="dwg"></div>`+mb("ayar");
-  $("#tabbar").innerHTML=[["panel","home","باش بەت"],["kasa","cart","سېتىش"],["urun","box","تاۋار"],["musteri","users","نېسى"]].map(([k,i,l])=>`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(i,26)}${l}</button>`).join("");
-  const f={panel,islem,kasa,urun,alis,gider,musteri,servis,sandoq,hesap,rapor,ayar,trash}[tab];
+  $("#tabbar").innerHTML=[["panel","home","باش بەت"],["kasa","cart","سېتىش"],["urun","box","تاۋار"],["musteri","users","نېسى"],...(CAN("rep")?[["not","note","Not"]]:[])].map(([k,i,l])=>`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(i,26)}${l}</button>`).join("");
+  const f={panel,islem,kasa,urun,alis,gider,musteri,servis,sandoq,hesap,rapor,ayar,trash,not:notePage}[tab];
   const body=f();
   /* قايتا سىزىلغاندا تىزىملىكلەر ئورنىدا قالسۇن (iPhone دا سەكرەپ كەتمىسۇن) */
   const keep=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips,#view .whl")].map(e=>[e.className,e.scrollTop,e.scrollLeft]),wy=window.scrollY;
@@ -1183,7 +1183,7 @@ function dayList(n){const out=[];for(let i=n-1;i>=0;i--){const d=new Date();d.se
 
 /* ---------- Ana sayfa ---------- */
 const IC={home:"M3 11l9-7 9 7v9H3z",cart:"M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01",box:"M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10",inb:"M12 3v12M7 10l5 5 5-5M4 21h16",exp:"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6",users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5",chart:"M4 20V11M10 20V5M16 20v-8M22 20H2",gear:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2",pie:"M12 3a9 9 0 1 0 9 9h-9zM15 3.3A9 9 0 0 1 20.7 9H15z",cal:"M4 6h16v15H4zM4 10h16M8 3v4M16 3v4",note:"M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",coin:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM14.5 9H11a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9.5M12 7v2M12 15v2",trash:"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"};
-const TICON={hesap:"pie",sandoq:"wal",servis:"tool",panel:"home",islem:"clock",kasa:"cart",urun:"box",alis:"inb",gider:"exp",musteri:"users",rapor:"chart",ayar:"gear"};
+const TICON={hesap:"pie",sandoq:"wal",servis:"tool",panel:"home",islem:"clock",kasa:"cart",urun:"box",alis:"inb",gider:"exp",musteri:"users",rapor:"chart",ayar:"gear",not:"note"};
 const svgI=(k,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="${IC[k]}"/></svg>`;
 const PAL=["#1fc7b6","#f4b955","#ff6f61","#8b7bff","#6cb4ff","#45d99a"];
 function donut(items,center1,center2){
@@ -2520,7 +2520,7 @@ async function editDate(k,id){
   go();if($("#modal").classList.contains("on")){if(k==="r")showR(id);else if(k==="p")showP(id)}toast(msg.join(" · "));
 }
 /* ---------- خوجايىن / خىزمەتچى ھالىتى ---------- */
-const BOSS_TABS=new Set(["servis","sandoq","hesap","alis","gider","islem","rapor","trash"]);
+const BOSS_TABS=new Set(["servis","sandoq","hesap","alis","gider","islem","rapor","trash","not"]);
 function STAFF(){if(USERS().length)return !CUR||CUR.role!=="boss";try{return localStorage.getItem(KEY+"-role")==="staff"}catch(e){return false}}
 /* خىزمەتچىلەرنىڭ ھوقۇقلىرى: خوجايىن ھەر بىر ئادەمگە ئايرىم بېرىدۇ */
 const PERMS=[["cost","ئېلىش باھاسى ۋە پايدىنى كۆرۈش"],["rep","ھېسابات، چىقىم ۋە دوكلات"],["stock","يېڭى تاۋار ۋە مال كىرگۈزۈش"],["edit","ئۆچۈرۈش ۋە تۈزىتىش"]];
@@ -2912,7 +2912,7 @@ function sandoq(){
    ${som<-0.5&&rt?`<button class="btn" style="width:100%;margin-top:8px" onclick="fxFix()">⚖ سوم مىنۇسىنى تەڭلەش (${fmtN(-som)} سوم = ${fmtN(r2(-som/rt))} $)</button>`:""}
    <div class="row" style="margin-top:12px"><button class="btn" style="flex:1;padding:13px" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" onclick="fxNew()">سوم ⇄ $</button></div>
    <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="act('gider')">چىقىم</button><button class="btn g" style="flex:1" onclick="cashCount()">ساناش</button></div>
-   <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="outNew()">💸 پۇل چىقىردىم (ئىسمەت / ئۆزۈم …)</button></div>${pendList().length?`<button class="btn" style="width:100%;margin-top:8px;display:flex;justify-content:space-between" onclick="outList()"><span>⏳ ${pendList().length} خاتىرىنىڭ تۈرى تاللانمىغان</span><b>${fmt(r2(pendList().reduce((a,h)=>a+num(h.amount),0)))}</b></button><div class="foot">ئەمەلىيەتتە قولدا بولۇشى: ${fmtN(r2(usd-cashMoves().pend.usd))} $ · ${somF(som-cashMoves().pend.som)} (⏳ تۈرى تاللانغاندىن كېيىن ئەپتىكى قالدۇققا چۈشىدۇ)</div>`:""}</div>
+   ${pendList().length?`<div class="foot" dir="ltr" style="text-align:left">Gerçekte elinde olması gereken: ${fmtN(r2(usd-cashMoves().pend.usd))} $ · ${somF(som-cashMoves().pend.som)}<br>⏳ Not sekmesinde türü seçilmemiş kayıtlar var; seçince kasa buna iner.</div>`:""}</div>
   <button class="btn g" style="width:100%;margin-bottom:12px;justify-content:space-between;display:flex" onclick="setTab('hesap')"><span>${svgI("pie",18)} ھېساباتلىشىش (يېشىل ۋە ئۈلۈشلەر)</span><span>←</span></button>
   <div class="mhead"><button class="btn s g" onclick="cShift(-1)" aria-label="ئالدىنقى ئاي">→</button><b>${mname}</b><button class="btn s g" onclick="cShift(1)" aria-label="كېيىنكى ئاي">←</button></div>
   <div class="grid">
@@ -3044,57 +3044,63 @@ function handShow(id){
   const {E}=cashMoves(),ae=E.find(e=>e.on===`handShow('${h.id}')`)||{},after=ae.bal;
   $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("up",18)}</span><div><b>${h.fx?somF(h.fx.amt):fmt(h.amount)} تاپشۇرۇلدى</b><small>${esc(h.to)} · ${fD(h.date)} ${esc(h.time||"")}</small></div></div>
   <div class="card" style="margin:0"><dl class="kv"><dt>كىمگە</dt><dd>${esc(h.to)}</dd>${h.src==="own"?`<dt>مەنبە</dt><dd>💼 ئۆز چۆنتىكىمدىن (سەرمايە)</dd>`:""}<dt>سومما</dt><dd>${fmt(h.amount)}${h.fx?" · "+fxNote(h.fx):""}</dd>${h.note?`<dt>ئىزاھات</dt><dd>${esc(h.note)}</dd>`:""}<dt>قولدا قالغان</dt><dd><b>${amtC(after??0,ae.c||"USD")}</b></dd>${(()=>{if(handWho(h)==="boss"){const D=bossDebt();return D.has?`<dt>قالغان قەرز</dt><dd class="neg">${fmt(D.left)}</dd>`:""}const o=ledger().ps.find(x=>x.id===handWho(h));return o?`<dt>بېرىشكە قالغان</dt><dd>${fmt(o.left)}</dd>`:""})()}</dl></div>
-  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" onclick="closeM()">تامام</button>${msgBtn("",handText(h),"ھېسابات يوللاش")}<button class="x e" onclick="outFinal('${h.id}')">${h.pend?"⏳ تۈرىنى تاللاش":"✎ تۈرىنى ئۆزگەرتىش"}</button><button class="x" onclick="handDel('${h.id}')">ئۆچۈرۈش</button></div>`;
+  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" onclick="closeM()">تامام</button>${msgBtn("",handText(h),"ھېسابات يوللاش")}<button class="x e" onclick="outFinal('${h.id}')">${h.pend?"⏳ Tür seç":"✎ Türü değiştir"}</button><button class="x" onclick="handDel('${h.id}')">ئۆچۈرۈش</button></div>`;
   $("#modal").classList.add("on");
 }
 
 /* ---------- پۇل چىقىرىش: ئالدى بىلەن خاتىرىلىنىدۇ، ئاخىرىدا تۈرى تاللىنىدۇ ---------- */
 const pendList=()=>(S.hand||[]).filter(h=>h.pend);
+const NT={dir:'dir="ltr" style="text-align:left"'};
 function pendBanner(){const P=pendList();if(!P.length)return "";const tot=r2(P.reduce((a,h)=>a+num(h.amount),0));
-  return `<button class="btn" style="width:100%;margin-bottom:12px;display:flex;justify-content:space-between" onclick="outList()"><span>⏳ ${P.length} خاتىرىنىڭ تۈرى تاللانمىغان</span><b>${fmt(tot)}</b></button>`}
+  return `<button class="btn" style="width:100%;margin-bottom:12px;display:flex;justify-content:space-between" onclick="setTab('not')"><span>⏳ ${P.length} kayıt: türü seçilmedi</span><b>${fmt(tot)}</b></button>`}
+function notePage(){
+  const P=pendList().sort((a,b)=>(b.date+(b.time||"")).localeCompare(a.date+(a.time||"")));
+  const tot=r2(P.reduce((a,h)=>a+num(h.amount),0));
+  const kind=h=>h.who==="boss"?"🟢 "+whoName("boss")+"'e teslim":"👤 "+(h.to||whoName(h.who))+" payından";
+  const done=[...(S.hand||[]).filter(h=>h.out&&!h.pend).map(h=>({d:h.date,t:h.time||"",to:h.to||whoName(h.who),n:h.note,a:h.amount,fx:h.fx,k:kind(h),on:`handShow('${h.id}')`})),
+    ...S.expenses.filter(x=>x.from).map(x=>({d:x.date,t:x.time||"",to:String(x.cat||"").replace("پۇل چىقىرىلدى · ",""),n:x.note,a:x.amount,fx:x.fx,k:"📉 Masraf",on:`editX('${x.id}')`}))].sort((a,b)=>(b.d+b.t).localeCompare(a.d+a.t)).slice(0,30);
+  const row=(o,cls)=>`<div class="li" onclick="${o.on}"><span><b dir="auto">${esc(o.to)}</b><small>${fD(o.d)}${o.t?" · "+esc(o.t):""} · ${esc(o.n||"")}</small>${o.k?`<small class="itl">${o.k}</small>`:""}</span><b class="${cls}">${o.fx?esc(somF(o.fx.amt)):fmt(o.a)}</b></div>`;
+  return `<div class="foot" ${NT.dir}>Kasadan çıkan parayı buraya not et. Ne için kullanıldığı netleşince türünü seç; o zaman hesaba işlenir. Seçene kadar kasa ve kâr değişmez.</div>
+  <button class="btn" style="width:100%;margin:12px 0" onclick="outNew()">💸 Para çıkardım</button>
+  <div class="sec" style="border-radius:12px 12px 0 0"><span ${NT.dir}>⏳ Türü seçilmeyenler</span><span>${P.length?fmt(tot):""}</span></div>
+  <div class="lst" style="border-radius:0 0 16px 16px;margin-bottom:14px">${P.length?P.map(h=>row({d:h.date,t:h.time,to:h.to||whoName(h.who),n:h.note,a:h.amount,fx:h.fx,k:"",on:`outFinal('${h.id}')`},"neg")).join(""):`<div class="li" style="cursor:default"><span class="foot" ${NT.dir}>Bekleyen kayıt yok.</span></div>`}</div>
+  ${done.length?`<div class="sec" style="border-radius:12px 12px 0 0"><span ${NT.dir}>Seçilenler</span><span></span></div><div class="lst" style="border-radius:0 0 16px 16px">${done.map(o=>row(o,"")).join("")}</div>`:""}`;
+}
 async function outNew(){
   const P_=PART(),CM=cashMoves();
   const hasIs=P_.shares.some(x=>/ismet|ئىسمەت/i.test(x.name||""));
-  const who=[["boss",P_.boss],...P_.shares.map(x=>[x.id,x.me?"مەن ئۆزۈم ئىشلەتتىم":x.name])];if(!hasIs)who.push(["ismet","ئىسمەت"]);
-  const f=await form("پۇل چىقىردىم · قولدا "+fmtN(CM.usd)+" $ · "+somF(CM.som),[{n:"w",l:"كىمگە / كىم ئىشلەتتى؟",v:"ismet",opts:who},{n:"cu",l:"قايسى پۇل؟",v:"",opts:[["","— تاللاڭ —"],["usd","$ دوللار"],["uzs","سوم"]]},{n:"a",l:"قانچە پۇل؟",num:1,req:1},{n:"rt",l:"كۇرس: 1 $ = ? سوم (پەقەت سوم ئۈچۈن)",v:getRate()?String(getRate()):"",num:1},{n:"d",l:"قايسى كۈنى؟",v:today(),type:"date"},{n:"n",l:"نېمە ئۈچۈن؟ (ئىزاھات)",v:"",req:1}],"ساقلاش");
+  const who=[["boss",P_.boss],...P_.shares.map(x=>[x.id,x.me?"Ben kendim kullandım":x.name])];if(!hasIs)who.push(["ismet","İsmet"]);
+  const f=await form("Para çıkardım · kasada "+fmtN(CM.usd)+" $ · "+somF(CM.som),[{n:"w",l:"Kime verildi / kim kullandı?",v:"ismet",opts:who},{n:"cu",l:"Hangi para?",v:"",opts:[["","— seç —"],["usd","$ Dolar"],["uzs","Som"]]},{n:"a",l:"Ne kadar?",num:1,req:1},{n:"rt",l:"Kur: 1 $ = ? som (sadece som için)",v:getRate()?String(getRate()):"",num:1},{n:"d",l:"Hangi gün?",v:today(),type:"date"},{n:"n",l:"Ne için? (not)",v:"",req:1}],"Kaydet");
   if(!f||!num(f.a))return;
-  if(!f.cu){await note("قايسى پۇل ئىكەنلىكىنى تاللاڭ ($ ياكى سوم).");return}
-  const zs=f.cu==="uzs";if(zs&&!num(f.rt)){await note("سوم ئۈچۈن كۇرسنى يېزىڭ.");return}
+  if(!f.cu){await note("Hangi para olduğunu seç ($ veya som).");return}
+  const zs=f.cu==="uzs";if(zs&&!num(f.rt)){await note("Som için kuru yaz.");return}
   const hd=/^\d{4}-\d{2}-\d{2}$/.test(f.d||"")?f.d:today();
-  if(f.w==="ismet"&&!P_.shares.some(x=>x.id==="ismet")&&!hasIs)P_.shares.push({id:"ismet",name:"ئىسمەت",pct:0});
+  if(f.w==="ismet"&&!hasIs)P_.shares.push({id:"ismet",name:"İsmet",pct:0});
   const wid=f.w==="ismet"&&hasIs?(P_.shares.find(x=>/ismet|ئىسمەت/i.test(x.name||""))||{}).id||"ismet":f.w;
   S.hand=S.hand||[];
-  const h={id:uid(),date:hd,time:hd===today()?nowT():"",amount:zs?r2(num(f.a)/num(f.rt)):num(f.a),who:wid,to:whoName(wid),note:(f.n||"").trim(),src:"",pend:1};
+  const h={id:uid(),date:hd,time:hd===today()?nowT():"",amount:zs?r2(num(f.a)/num(f.rt)):num(f.a),who:wid,to:whoName(wid),note:(f.n||"").trim(),src:"",pend:1,out:1};
   if(zs){h.fx={cur:"UZS",amt:Math.round(num(f.a)),rate:num(f.rt)};if(hd===today())keepRate(today(),h.fx.rate)}
-  S.hand.push(h);go();toast("ساقلاندى · تۈرىنى كېيىن تاللايسىز");
-}
-function outList(){
-  const P=pendList().sort((a,b)=>(b.date+(b.time||"")).localeCompare(a.date+(a.time||"")));
-  $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">⏳</span><div><b>تۈرى تاللانمىغان پۇللار</b><small>${P.length} خاتىرە · ${fmt(r2(P.reduce((a,h)=>a+num(h.amount),0)))}</small></div></div>
-  <div class="foot" style="margin:8px 0">بۇ پۇللار قولدىن چىققان، لېكىن تېخى پايدا ياكى قەرزگە كىرمىدى. بېسىپ تۈرىنى تاللاڭ.</div>
-  <div class="lst">${P.length?P.map(h=>`<div class="li" onclick="outFinal('${h.id}')"><span><b dir="auto">${esc(h.to||whoName(h.who))}</b><small>${fD(h.date)}${h.time?" · "+esc(h.time):""} · ${esc(h.note||"")}</small></span><b class="neg">${h.fx?esc(somF(h.fx.amt)):fmt(h.amount)}</b></div>`).join(""):`<div class="li" style="cursor:default"><span class="foot">ھەممىسى تاللاندى ✓</span></div>`}</div>
-  <div class="row noprint" style="margin-top:14px"><button class="btn" onclick="closeM()">تاقاش</button><button class="btn g" onclick="outNew()">＋ پۇل چىقىردىم</button></div>`;
-  $("#modal").classList.add("on");
+  S.hand.push(h);go();toast("Kaydedildi · türünü sonra seçersin");
 }
 async function outFinal(id){
   const h=(S.hand||[]).find(x=>x.id===id);if(!h)return;
   const P_=PART(),a=num(h.amount),r=handWho(h),isBoss=r==="boss",D=bossDebt();
-  const pc=[[P_.boss,bossPct()],...P_.shares.map(x=>[x.me?"مەن":x.name,num(x.pct)])].filter(x=>x[1]>0);
+  const pc=[[P_.boss,bossPct()],...P_.shares.map(x=>[x.me?"Ben":x.name,num(x.pct)])].filter(x=>x[1]>0);
   const eff=pc.map(([n,p])=>`${esc(n)} −${fmt(r2(a*p/100))}`).join(" · ");
   const nm=esc(h.to||whoName(r));
-  const v=await dlgOpen(`<h3>${h.fx?somF(h.fx.amt):fmt(a)} · ${nm}</h3><div class="foot" style="margin-bottom:8px">${esc(h.note||"")}<br>بۇ پۇل قايسى ھېساباتقا كىرىدۇ؟</div>
-   <div class="jseg" style="margin:8px 0">
-    <button type="button" onclick="dlgClose('exp')">📉 چىقىم<small>ساپ پايدا −${fmt(a)} · ${eff}</small></button>
-    ${isBoss?"":`<button type="button" onclick="dlgClose('own')">👤 ${nm} نىڭ ئۆز ھەققىدىن<small>${nm} نىڭ قالغان ھەققى −${fmt(a)} · باشقىلارغا تەسىر يوق</small></button>`}
-    <button type="button" onclick="dlgClose('boss')">🟢 ${esc(P_.boss)} غا تاپشۇرۇلدى<small>${D.has?"قەرز "+fmt(D.left)+" → "+fmt(r2(D.left-a)):"قەرزدىن چۈشىدۇ"}</small></button>
-   </div><div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">كېيىن</button></div>`);
+  const v=await dlgOpen(`<h3 ${NT.dir}>${h.fx?somF(h.fx.amt):fmt(a)} · ${nm}</h3><div class="foot" ${NT.dir} style="margin-bottom:8px;text-align:left">${esc(h.note||"")}<br>Bu para hangi hesaba işlensin?</div>
+   <div class="jseg" style="margin:8px 0" ${NT.dir}>
+    <button type="button" onclick="dlgClose('exp')">📉 Masraf<small>Net kâr −${fmt(a)} · ${eff}</small></button>
+    ${isBoss?"":`<button type="button" onclick="dlgClose('own')">👤 ${nm} payından<small>${nm} kalan hakkı −${fmt(a)} · başkası etkilenmez</small></button>`}
+    <button type="button" onclick="dlgClose('boss')">🟢 ${esc(P_.boss)}'e teslim edildi<small>${D.has?"Borç "+fmt(D.left)+" → "+fmt(r2(D.left-a)):"Borçtan düşer"}</small></button>
+   </div><div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">Sonra</button></div>`);
   if(!v)return;
   if(v==="exp"){
     const x={id:uid(),time:h.time||nowT(),cat:"پۇل چىقىرىلدى · "+(h.to||whoName(r)),amount:a,date:h.date,note:h.note||"",from:h.id};if(h.fx)x.fx=h.fx;
-    S.expenses.push(x);S.hand=S.hand.filter(y=>y.id!==h.id);toast("چىقىمغا قوشۇلدى");
-  }else if(v==="boss"){h.who="boss";h.to=P_.boss;delete h.pend;toast(P_.boss+" غا تاپشۇرۇلدى")}
-  else{delete h.pend;toast("ئۆز ھەققىدىن چۈشۈرۈلدى")}
-  go();if(pendList().length&&$("#modal.on"))outList();else closeM();
+    S.expenses.push(x);S.hand=S.hand.filter(y=>y.id!==h.id);toast("Masrafa eklendi");
+  }else if(v==="boss"){h.who="boss";h.to=P_.boss;delete h.pend;toast(P_.boss+"'e teslim olarak işlendi")}
+  else{delete h.pend;toast("Kendi payından düşüldü")}
+  go();closeM();
 }
 async function handDel(id){if(!await ask("بۇ پۇل تاپشۇرۇش خاتىرىسى ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;logDel("hand",S.hand.find(x=>x.id===id));S.hand=S.hand.filter(x=>x.id!==id);closeM();go()}
 async function cashCount(){
@@ -3272,7 +3278,7 @@ function hesap(){
    <div class="stat hero" style="grid-column:1/-1"><small>ساپ پايدا (بۆلۈنىدىغان)</small><b class="${L.net<0?"neg":""}">${fmt(L.net)}</b><div class="sub2">${[[PART().boss,bossPct()],...PART().shares.map(x=>[x.name,x.pct])].map(([n,p])=>`<span>${esc(n)} %${fmtN(p)}</span>`).join("")}</div></div>
   </div>
   ${card(L.boss,1)}${L.ps.map(o=>card(o)).join("")}
-  ${hMon==="all"?`<div class="card"><h2>تەكشۈرۈش · پۇل نەگە كەتتى</h2><dl class="kv"><dt>قولۇمدىكى نەق پۇل</dt><dd>${fmt(cash)}<br><small class="foot">${(c=>fmtN(c.usd)+" $ + "+somF(c.som))(cashMoves())}</small></dd><dt>چىقىم</dt><dd class="neg tapn" onclick="expList()">${fmt(L.gid)}</dd><dt>يېشىلگە تاپشۇرغان</dt><dd class="pos tapn" onclick="handList('boss')">${fmt(L.boss.paid)}</dd>${(up=>up>0.004?`<dt>ئۈلۈش بەرگىنىم</dt><dd class="pos">${fmt(up)}</dd>`:"")(L.ps.reduce((a,o)=>a+o.paid,0))}${(pp=>pp>0.004?`<dt>⏳ تۈرى تاللانمىغان</dt><dd class="tapn" onclick="outList()">${fmt(pp)}</dd>`:"")(r2(pendList().reduce((a,h)=>a+num(h.amount),0)))}<dt>مۇشتەرىلەردىكى نېسى</dt><dd>${fmt(debt)}</dd><dt>كارتا / ھاۋالە بىلەن كەلگەن</dt><dd>${fmt(cashMoves().nc.reduce((a,e)=>a+e.a,0))}</dd></dl><div class="foot" style="margin-top:8px">يىغقان نەق پۇل = قولدىكى نەق + چىقىم + يېشىلگە تاپشۇرغان. تاپشۇرغان پۇل يوقالمىدى، يېشىلنىڭ قەرزىدىن چۈشتى.</div></div>`:`<div class="foot" style="margin-bottom:10px">ئاي تاللانغاندا شۇ ئايدىكى سېتىش ۋە شۇ ئايدا بېرىلگەن پۇل كۆرسىتىلىدۇ. ئومۇمىي قالدۇق ئۈچۈن «ھەممىسى» نى تاللاڭ.</div>`}
+  ${hMon==="all"?`<div class="card"><h2>تەكشۈرۈش · پۇل نەگە كەتتى</h2><dl class="kv"><dt>قولۇمدىكى نەق پۇل</dt><dd>${fmt(cash)}<br><small class="foot">${(c=>fmtN(c.usd)+" $ + "+somF(c.som))(cashMoves())}</small></dd><dt>چىقىم</dt><dd class="neg tapn" onclick="expList()">${fmt(L.gid)}</dd><dt>يېشىلگە تاپشۇرغان</dt><dd class="pos tapn" onclick="handList('boss')">${fmt(L.boss.paid)}</dd>${(up=>up>0.004?`<dt>ئۈلۈش بەرگىنىم</dt><dd class="pos">${fmt(up)}</dd>`:"")(L.ps.reduce((a,o)=>a+o.paid,0))}${(pp=>pp>0.004?`<dt dir="ltr">⏳ Türü seçilmeyen</dt><dd class="tapn" onclick="setTab('not')">${fmt(pp)}</dd>`:"")(r2(pendList().reduce((a,h)=>a+num(h.amount),0)))}<dt>مۇشتەرىلەردىكى نېسى</dt><dd>${fmt(debt)}</dd><dt>كارتا / ھاۋالە بىلەن كەلگەن</dt><dd>${fmt(cashMoves().nc.reduce((a,e)=>a+e.a,0))}</dd></dl><div class="foot" style="margin-top:8px">يىغقان نەق پۇل = قولدىكى نەق + چىقىم + يېشىلگە تاپشۇرغان. تاپشۇرغان پۇل يوقالمىدى، يېشىلنىڭ قەرزىدىن چۈشتى.</div></div>`:`<div class="foot" style="margin-bottom:10px">ئاي تاللانغاندا شۇ ئايدىكى سېتىش ۋە شۇ ئايدا بېرىلگەن پۇل كۆرسىتىلىدۇ. ئومۇمىي قالدۇق ئۈچۈن «ھەممىسى» نى تاللاڭ.</div>`}
   ${xlsCard()}
   <button class="btn g" style="width:100%" onclick="partEdit()">ئۈلۈشلەرنى ئۆزگەرتىش</button>
   <div class="foot" style="margin-top:8px">ھېسابلاش: ساپ پايدا (سېتىش − تەننەرخ − چىقىملار) ئۈلۈش بويىچە بۆلۈنىدۇ. يېشىلگە تاپشۇرغان پۇل پەقەت قەرزدىن چۈشىدۇ.</div>`;
@@ -3796,7 +3802,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.53";
+const APP_VER="6.54";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
