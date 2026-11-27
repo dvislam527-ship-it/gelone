@@ -1602,7 +1602,7 @@ const FISCSS=`.fis .xwm{width:min(158px,48%);height:auto;flex:none;display:block
 .fis .xcon{display:block;margin-top:3px;font-size:10.5px;color:#56636c!important;line-height:1.35}.fis .xcon b{font-size:13px;color:#1d2329;font-weight:700;letter-spacing:.02em;display:inline}
 .fis .xt{width:100%;min-width:0;border-collapse:collapse;font-size:11.5px;line-height:1.35;margin:6px 0 4px;table-layout:auto}
 .fis .xt th,.fis .xt td{border:1px solid #8e9aa3!important;padding:4px 5px;white-space:normal;text-align:left;color:#1d2329!important;vertical-align:top;background:#fff}
-.fis .xt tbody tr[data-pc] td{background:rgba(var(--pc),.15)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.fis .xt tbody tr[data-pc] td{background:rgba(var(--pc),.15)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.fis .xt tbody tr.rt td.n,.fis .xt tbody tr.rt td>span{text-decoration:line-through}.fis .xt tbody tr.rt td{opacity:.6}.fis .xt small.rtn{display:block;text-decoration:none;font-weight:700;opacity:1}
 .fis .xt tbody tr[data-pc] td:first-child{box-shadow:inset 5px 0 0 rgb(var(--pc))}
 .fis .xt thead th{background:#dfe6ea!important;font-weight:700;font-size:10.5px;text-transform:uppercase}
 .fis .xt .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -1657,11 +1657,11 @@ function receiptHTML(r){
   r=rRoot(r);const fam=rFam(r),ids=new Set(fam.map(x=>x.id)),multi=fam.length>1,c=S.customers.find(x=>x.id===r.cid);
   const due=famBal(r),RP=rChain(r).filter(x=>x.alloc),ok=sgOK(r);
   const allL=fam.flatMap(m=>S.sales.filter(x=>x.rid===m.id)),sub=allL.reduce((a,x)=>a+x.qty*x.price,0),disc=fam.reduce((a,m)=>a+num(m.disc),0),tot=fam.reduce((a,m)=>a+num(m.total),0);
-  const wars=[];const rets=S.sales.filter(x=>ids.has(x.ret));
+  const wars=[];const rets=S.sales.filter(x=>ids.has(x.ret));const rq={};rets.forEach(x=>{rq[x.pid]=(rq[x.pid]||0)-x.qty});
   const F=(l,v,cl)=>`<tr class="${cl||""}"><td colspan="4" class="l">${l}</td><td class="n">${v}</td></tr>`;
   let n=0;const pcOf=catRGB;
   const rows=fam.map((m,mi)=>{const L=S.sales.filter(x=>x.rid===m.id);
-    return (mi?`<tr class="grp"><td colspan="5">${rNo(m)} · ${fD(m.date)} ${esc(m.time||"")} · qo'shimcha savdo</td></tr>`:"")+L.map(x=>{const p=P(x.pid)||{},sp=spec(p);n++;return `<tr data-pc style="--pc:${pcOf(x.pid)}"><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}).join("");
+    return (mi?`<tr class="grp"><td colspan="5">${rNo(m)} · ${fD(m.date)} ${esc(m.time||"")} · qo'shimcha savdo</td></tr>`:"")+L.map(x=>{const p=P(x.pid)||{},sp=spec(p);n++;const rt=Math.min(x.qty,rq[x.pid]||0);rq[x.pid]=(rq[x.pid]||0)-rt;const full=rt>0.0001&&rt>=x.qty-0.0001;return `<tr data-pc${full?' class="rt"':""} style="--pc:${pcOf(x.pid)}"><td class="c">${n}</td><td><span dir="auto">${esc(pname(x.pid))}</span>${sp?`<small dir="auto">${esc(sp)}</small>`:""}${rt>0.0001?`<small class="rtn">↩ ${full?"qaytarildi":fmtN(rt)+" ta qaytarildi"}</small>`:""}</td><td class="n">${fmtN(x.qty)}</td><td class="n">${fmtN(x.price)}</td><td class="n">${fmtN(x.qty*x.price)}</td></tr>`}).join("")}).join("");
   const pmL=m=>(m.pm&&m.pm!=="n"?" ("+({k:"karta",h:"o'tkazma"}[m.pm])+")":" (naqd)")+(m.fx?`<small>${fxNote(m.fx)}</small>`:"");
   return `<div class="fis" id="fis" dir="ltr" lang="uz">
   ${xHead("SOTUV CHEKI",[["Chek №",rNo(r)],["Sana",fD(r.date)+" "+esc(r.time||"")+(multi&&fam[fam.length-1].date!==r.date?" — "+fD(fam[fam.length-1].date):"")],r.by?["Sotuvchi",`<span dir="auto">${esc(r.by)}</span>`]:null,c?["Mijoz",`<span dir="auto">${esc(c.name)}</span>`]:null,])}
@@ -3692,7 +3692,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.40";
+const APP_VER="6.41";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
