@@ -1842,6 +1842,7 @@ function payHTML(p){
    ${(p.alloc||[]).map(a=>{const r=S.receipts.find(x=>x.id===a.rid);if(!r||famAt(rRoot(r),p).length>1)return "";return `<div class="${a.left>0.004?"debt":"ok"}"><span>${rNo(r)} qoldig'i</span><span>${a.left>0.004?fmtN(a.left):"0 · yopildi"}</span></div>`}).join("")}
    ${(p.alloc||[]).length&&!(has&&p.alloc.reduce((t,a)=>t+num(a.left),0)!==left)?"":left>0.004?`<div class="debt"><span>${has?(p.alloc&&p.alloc.length?"Umumiy qarz":"Qolgan qarz"):"Hozirgi qarz"}</span><span>${fmtN(left)}</span></div>`:left<-0.004?`<div class="ok"><span>Oldindan to'langan (avans)</span><span>${fmtN(-left)}</span></div>`:`<div class="ok"><span>Qarz to'liq yopildi</span><span>0</span></div>`}`)}
   ${p.sign&&p.sign.debt>0.004?ackHTML(p.sign.debt,1,p.sign.at):left>0.004?ackHTML(left,1):""}
+  ${p.note?`<div class="fn"><b>Izoh:</b> <span dir="auto">${esc(p.note)}</span></div>`:""}
   ${sigHTML("Qabul qildi (sotuvchi)","To'lovchi (mijoz)",fD(p.date),p.sign)}
   ${contactHTML()}
   <div class="fx">To'lovingiz uchun rahmat!</div></div>`;
@@ -1873,11 +1874,11 @@ function chainHTML(p){
   return `<div><span>Asosiy chek</span><span>${rNo(r)} · ${fD(r.date)}</span></div><div><span>Chek summasi</span><span>${fmtN(r.total)}</span></div><div><span>Avval to'langan</span><span>${fmtN(r2(num(r.total)-before))}</span></div><div><span>To'lovdan oldin qarz</span><span>${fmtN(before)}</span></div>`;
 }
 function pText(p){const c=S.customers.find(x=>x.id===p.cid)||{},has=p.after!=null,left=has?p.after:(cust().find(x=>x.c.id===p.cid)||{debt:0}).debt;
-  return [S.shop||"","Tel/Telegram/WhatsApp: "+(S.phone||DEF_PHONE),`TO'LOV CHEKI № ${payNo(p)}  ${fD(p.date)} ${p.time||""}`,"Mijoz: "+(c.name||""),"-----",...(p.alloc||[]).map(a=>{const r=S.receipts.find(x=>x.id===a.rid);if(!r||famAt(rRoot(r),p).length>1)return "";return rNo(r)+": "+fmtN(r2(a.left+num(a.a)))+" → "+fmtN(a.left)}),!(p.alloc||[]).length&&has?"Oldingi qarz: "+fmtN(p.before):"","To'landi ("+(PMU[p.pm]||"naqd")+"): "+fmtN(p.amount)+" "+S.cur+(p.fx?" ("+fxNote(p.fx)+")":""),left>0.004?(has?"Qolgan qarz: ":"Hozirgi qarz: ")+fmtN(left):left<-0.004?"Oldindan to'langan (avans): "+fmtN(-left):"Qarz to'liq yopildi","To'lovingiz uchun rahmat!"].filter(Boolean).join("\n")}
+  return [S.shop||"","Tel/Telegram/WhatsApp: "+(S.phone||DEF_PHONE),`TO'LOV CHEKI № ${payNo(p)}  ${fD(p.date)} ${p.time||""}`,"Mijoz: "+(c.name||""),"-----",...(p.alloc||[]).map(a=>{const r=S.receipts.find(x=>x.id===a.rid);if(!r||famAt(rRoot(r),p).length>1)return "";return rNo(r)+": "+fmtN(r2(a.left+num(a.a)))+" → "+fmtN(a.left)}),!(p.alloc||[]).length&&has?"Oldingi qarz: "+fmtN(p.before):"","To'landi ("+(PMU[p.pm]||"naqd")+"): "+fmtN(p.amount)+" "+S.cur+(p.fx?" ("+fxNote(p.fx)+")":""),left>0.004?(has?"Qolgan qarz: ":"Hozirgi qarz: ")+fmtN(left):left<-0.004?"Oldindan to'langan (avans): "+fmtN(-left):"Qarz to'liq yopildi",p.note?"Izoh: "+p.note:"","To'lovingiz uchun rahmat!"].filter(Boolean).join("\n")}
 function showP(id,fresh){
   const p=S.payments.find(x=>x.id===id);if(!p)return;
   if(!p.no){p.no=nextP();go()}
-  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>پۇل تاپشۇرۇۋېلىندى</b><small>چەك ${payNo(p)} · ${fmt(p.amount)}</small></div></div>`:"")+payHTML(p)+signBtns("p",p)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareP('${p.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlP('${p.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="x e" onclick="editDate('p','${p.id}')">✎ چېسلانى تۈزىتىش</button><button class="x" onclick="delPay('${p.id}')">چەكنى ئۆچۈرۈش</button></div><div id="rmsg" class="foot noprint"></div>`;
+  $("#sheet").innerHTML=(fresh?`<div class="okbar noprint"><span class="okic">✓</span><div><b>پۇل تاپشۇرۇۋېلىندى</b><small>چەك ${payNo(p)} · ${fmt(p.amount)}</small></div></div>`:"")+payHTML(p)+signBtns("p",p)+`<div class="row noprint rbtns" style="margin-top:14px"><button class="btn" onclick="closeM()">${fresh?"تامام":"تاقاش"}</button><button class="btn g" onclick="shareP('${p.id}')">ھەمبەھىرلەش</button><button class="btn g" onclick="dlP('${p.id}')">${window.AndroidBridge?"بېسىش / PDF":"چۈشۈرۈش"}</button></div><div class="row noprint" style="margin-top:10px;justify-content:space-between"><button class="x e" onclick="editDate('p','${p.id}')">✎ چېسلانى تۈزىتىش</button><button class="x e" onclick="editPNote('${p.id}')">✎ ئىزاھات</button><button class="x" onclick="delPay('${p.id}')">چەكنى ئۆچۈرۈش</button></div><div id="rmsg" class="foot noprint"></div>`;
   $("#modal").classList.add("on");
 }
 function shareP(id){shareSheet("p",id)}
@@ -2431,6 +2432,10 @@ async function payC(id){
 /* خاتىرىنىڭ چېسلاسىنى تۈزىتىش (سېتىش چېكى، پۇل تاپشۇرۇش، قايتۇرۇش) */
 const okDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||"")?d:today();
 /* بىر نېسى چېكى زەنجىرىدە كۆپ سېتىش/پۇل بولسا، قايسىسىنىڭ چېسلاسىنى تۈزىتىشنى تاللىتىدۇ */
+async function editPNote(id){
+  const P0=S.payments.find(x=>x.id===id);if(!P0)return;
+  const f=await form("چەككە ئىزاھات",[{n:"w",l:"ئىزاھات (چەكتە كۆرۈنىدۇ)",v:P0.note||"",ta:1}],"ساقلاش");
+  if(!f)return;P0.note=String(f.w||"").trim();if(!P0.note)delete P0.note;go();showP(P0.id)}
 async function editRNote(id){
   const R0=S.receipts.find(x=>x.id===id);if(!R0)return;const R=rRoot(R0);
   const f=await form("چەككە ئىزاھات",[{n:"w",l:"ئىزاھات (چەكتە كۆرۈنىدۇ)",v:R.note||"",ta:1}],"ساقلاش");
@@ -3694,7 +3699,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.42";
+const APP_VER="6.43";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
