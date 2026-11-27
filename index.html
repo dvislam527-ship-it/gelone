@@ -2871,8 +2871,8 @@ function cashMoves(){
   S.expenses.filter(x=>!x.nocash).forEach(x=>{const b={d:x.date,t:x.time||"",txt:(x.cat||"چىقىم")+(x.note?" · "+x.note:""),on:x.ins&&S.receipts.some(r=>r.id===x.ins)?`showR('${x.ins}')`:`editX('${x.id}')`,ic:"exp"};E.push(x.fx?Z({...b,a:-num(x.fx.amt)}):U({...b,a:-x.amount}))});
   if(S.buyCash)S.buys.forEach(b=>E.push(U({d:b.date,t:"",a:-b.qty*b.cost,txt:"مال ئېلىندى · "+pname(b.pid)+" × "+fmtN(b.qty),on:`editB('${b.id}')`,ic:"truck"})));
   (S.hand||[]).forEach(h=>{if(h.src==="own"||h.pend)return;const b={d:h.date,t:h.time||"",txt:(handWho(h)==="boss"?"تاپشۇرۇلدى → ":"ئۈلۈش بېرىلدى → ")+whoName(handWho(h)),on:`handShow('${h.id}')`,ic:"up",hand:1};E.push(h.fx?Z({...b,a:-num(h.fx.amt)}):U({...b,a:-h.amount}))});
-  (S.cadj||[]).forEach(c=>{const b={d:c.date,t:c.time||"",a:c.amount,txt:"ساناپ تۈزىتىلدى"+(c.note?" · "+c.note:""),on:"",ic:"note"};E.push(c.cur==="UZS"?Z(b):U(b))});
-  (S.fxx||[]).forEach(x=>{const b={d:x.date,t:x.time||"",txt:"ئالماشتۇرۇش · كۇرس "+fmtN(x.rate),on:`fxDel('${x.id}')`,ic:"note",ex:1};
+  (S.cadj||[]).forEach(c=>{const b={d:c.date,t:c.time||"",a:c.amount,txt:"ساناپ تۈزىتىلدى"+(c.note?" · "+c.note:""),on:`cadjShow('${c.id}')`,ic:"note"};E.push(c.cur==="UZS"?Z(b):U(b))});
+  (S.fxx||[]).forEach(x=>{const b={d:x.date,t:x.time||"",txt:"ئالماشتۇرۇش · كۇرس "+fmtN(x.rate),on:`fxShow('${x.id}')`,ic:"note",ex:1};
     if(x.dir==="u2s"){E.push(U({...b,a:-num(x.usd)}));E.push(Z({...b,a:num(x.som)}))}else{E.push(Z({...b,a:-num(x.som)}));E.push(U({...b,a:num(x.usd)}))}});
   E.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
   /* بىر پۇل يېتىشمىسە، ئاپتوماتىك ھالدا يەنە بىرىدىن شۇ كۈنى كۇرس بىلەن ئالماشتۇرۇلىدۇ (خاتىرە ساقلانمايدۇ، ھەر قېتىم ھېسابلىنىدۇ) */
@@ -2940,6 +2940,19 @@ async function fxFix(){
   const sm=Math.round(-som),us=r2(sm/rt);
   if(!await ask("سوم مىنۇستا: "+somF(-som)+"\nدوللاردىن "+fmtN(us)+" $ بوزۇپ "+somF(sm)+" ئالغان دەپ يېزىلىدۇ (كۇرس "+fmtN(rt)+").\nجەمئىي پۇل ئۆزگەرمەيدۇ. ماقۇلمۇ؟","ھەئە، تەڭلە"))return;
   S.fxx=S.fxx||[];S.fxx.push({id:uid(),date:today(),time:nowT(),dir:"u2s",som:sm,rate:rt,usd:us});go();toast("تەڭلەندى")}
+async function recAct(t){return await dlgOpen(`<h3 ${NT.dir}>${t}</h3><div class="row dbtn" style="margin-top:12px"><button class="btn g" onclick="dlgClose(null)">Kapat</button><button class="btn g" onclick="dlgClose('edit')">✎ Düzenle</button><button class="btn g" onclick="dlgClose('del')">🗑 Sil</button></div>`)}
+async function fxShow(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;
+  const v=await recAct("Çevirme: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $ · kur "+fmtN(x.rate));if(!v)return;
+  if(v==="del")return fxDel(id);
+  const f=await form("Çevirmeyi düzenle",[{n:"s",l:"Som miktarı",num:1,req:1,v:String(x.som)},{n:"u",l:"Dolar miktarı",num:1,req:1,v:String(x.usd)},{n:"d",l:"Hangi gün?",type:"date",v:x.date}],"Kaydet");
+  if(!f||!num(f.s)||!num(f.u))return;
+  x.som=Math.round(num(f.s));x.usd=r2(num(f.u));x.rate=Math.round(x.som/x.usd);if(/^\d{4}-\d{2}-\d{2}$/.test(f.d||""))x.date=f.d;go();toast("Düzeltildi")}
+async function cadjShow(id){const c=(S.cadj||[]).find(y=>y.id===id);if(!c)return;
+  const v=await recAct("Sayım düzeltmesi: "+(c.amount>0?"+":"")+fmtN(c.amount)+(c.cur==="UZS"?" som":" $"));if(!v)return;
+  if(v==="del"){if(!await ask("Bu sayım düzeltmesi silinsin mi?","ئۆچۈرۈش",1))return;S.cadj=S.cadj.filter(y=>y.id!==id);go();return}
+  const f=await form("Sayım düzeltmesini düzenle",[{n:"a",l:"Fark ("+(c.cur==="UZS"?"som":"$")+", eksi olabilir)",req:1,v:String(c.amount)},{n:"d",l:"Hangi gün?",type:"date",v:c.date},{n:"n",l:"Not",v:c.note||""}],"Kaydet");
+  if(!f||f.a===""||!num(f.a))return;
+  c.amount=c.cur==="UZS"?Math.round(num(f.a)):r2(num(f.a));if(/^\d{4}-\d{2}-\d{2}$/.test(f.d||""))c.date=f.d;c.note=(f.n||"").trim();go();toast("Düzeltildi")}
 async function fxDel(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;if(!await ask("ئالماشتۇرۇش: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $\nبۇ خاتىرە ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;S.fxx=S.fxx.filter(y=>y.id!==id);go()}
 function cShift(d){const [y,m]=cMonth.split("-").map(Number),n=new Date(y,m-1+d,1);cMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");render()}
 async function expEdit(id){await editX(id);expList()}
@@ -3820,7 +3833,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.55";
+const APP_VER="6.56";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
