@@ -2870,7 +2870,7 @@ function cashMoves(){
   S.services.filter(x=>num(x.paid)).forEach(x=>E.push(U({d:x.st>=3&&x.done?x.done:x.date,t:"",a:num(x.paid),txt:"رېمونت #"+x.no+" · "+(cname(x.cid)||""),on:`svcShow('${x.id}')`,ic:"tool"})));
   S.expenses.filter(x=>!x.nocash).forEach(x=>{const b={d:x.date,t:x.time||"",txt:(x.cat||"چىقىم")+(x.note?" · "+x.note:""),on:x.ins&&S.receipts.some(r=>r.id===x.ins)?`showR('${x.ins}')`:`editX('${x.id}')`,ic:"exp"};E.push(x.fx?Z({...b,a:-num(x.fx.amt)}):U({...b,a:-x.amount}))});
   if(S.buyCash)S.buys.forEach(b=>E.push(U({d:b.date,t:"",a:-b.qty*b.cost,txt:"مال ئېلىندى · "+pname(b.pid)+" × "+fmtN(b.qty),on:`editB('${b.id}')`,ic:"truck"})));
-  (S.hand||[]).forEach(h=>{if(h.src==="own")return;const b={d:h.date,t:h.time||"",txt:(handWho(h)==="boss"?"تاپشۇرۇلدى → ":"ئۈلۈش بېرىلدى → ")+whoName(handWho(h)),on:`handShow('${h.id}')`,ic:"up",hand:1};E.push(h.fx?Z({...b,a:-num(h.fx.amt)}):U({...b,a:-h.amount}))});
+  (S.hand||[]).forEach(h=>{if(h.src==="own"||h.pend)return;const b={d:h.date,t:h.time||"",txt:(handWho(h)==="boss"?"تاپشۇرۇلدى → ":"ئۈلۈش بېرىلدى → ")+whoName(handWho(h)),on:`handShow('${h.id}')`,ic:"up",hand:1};E.push(h.fx?Z({...b,a:-num(h.fx.amt)}):U({...b,a:-h.amount}))});
   (S.cadj||[]).forEach(c=>{const b={d:c.date,t:c.time||"",a:c.amount,txt:"ساناپ تۈزىتىلدى"+(c.note?" · "+c.note:""),on:"",ic:"note"};E.push(c.cur==="UZS"?Z(b):U(b))});
   (S.fxx||[]).forEach(x=>{const b={d:x.date,t:x.time||"",txt:"ئالماشتۇرۇش · كۇرس "+fmtN(x.rate),on:`fxDel('${x.id}')`,ic:"note",ex:1};
     if(x.dir==="u2s"){E.push(U({...b,a:-num(x.usd)}));E.push(Z({...b,a:num(x.som)}))}else{E.push(Z({...b,a:-num(x.som)}));E.push(U({...b,a:num(x.usd)}))}});
@@ -2892,7 +2892,8 @@ function cashMoves(){
   E.length=0;OUT.forEach(x=>E.push(x));
   const rt=getRate();
   /* دوللار ۋە سوم ئايرىم، راست ھالەت بىلەن قايتۇرۇلىدۇ (مىنۇس بولسا مىنۇس كۆرۈنىدۇ) */
-  return {E,bal:r2(B.USD+(rt?B.UZS/rt:0)),usd:r2(B.USD),som:r2(B.UZS),nc};
+  const PD={usd:0,som:0};(S.hand||[]).filter(h=>h.pend).forEach(h=>{if(h.fx)PD.som+=num(h.fx.amt);else PD.usd+=num(h.amount)});PD.usd=r2(PD.usd);PD.som=Math.round(PD.som);
+  return {E,bal:r2(B.USD+(rt?B.UZS/rt:0)),usd:r2(B.USD),som:r2(B.UZS),nc,pend:PD};
 }
 function cashOnHand(){return cashMoves().bal}
 const amtC=(a,c)=>c==="UZS"?fmtN(Math.round(a))+" so'm":fmtN(a)+" "+(S.cur||"$");
@@ -2911,7 +2912,7 @@ function sandoq(){
    ${som<-0.5&&rt?`<button class="btn" style="width:100%;margin-top:8px" onclick="fxFix()">⚖ سوم مىنۇسىنى تەڭلەش (${fmtN(-som)} سوم = ${fmtN(r2(-som/rt))} $)</button>`:""}
    <div class="row" style="margin-top:12px"><button class="btn" style="flex:1;padding:13px" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" onclick="fxNew()">سوم ⇄ $</button></div>
    <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="act('gider')">چىقىم</button><button class="btn g" style="flex:1" onclick="cashCount()">ساناش</button></div>
-   <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="outNew()">💸 پۇل چىقىردىم (ئىسمەت / ئۆزۈم …)</button></div>${pendList().length?`<button class="btn" style="width:100%;margin-top:8px;display:flex;justify-content:space-between" onclick="outList()"><span>⏳ ${pendList().length} خاتىرىنىڭ تۈرى تاللانمىغان</span><b>${fmt(r2(pendList().reduce((a,h)=>a+num(h.amount),0)))}</b></button>`:""}</div>
+   <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="outNew()">💸 پۇل چىقىردىم (ئىسمەت / ئۆزۈم …)</button></div>${pendList().length?`<button class="btn" style="width:100%;margin-top:8px;display:flex;justify-content:space-between" onclick="outList()"><span>⏳ ${pendList().length} خاتىرىنىڭ تۈرى تاللانمىغان</span><b>${fmt(r2(pendList().reduce((a,h)=>a+num(h.amount),0)))}</b></button><div class="foot">ئەمەلىيەتتە قولدا بولۇشى: ${fmtN(r2(usd-cashMoves().pend.usd))} $ · ${somF(som-cashMoves().pend.som)} (⏳ تۈرى تاللانغاندىن كېيىن ئەپتىكى قالدۇققا چۈشىدۇ)</div>`:""}</div>
   <button class="btn g" style="width:100%;margin-bottom:12px;justify-content:space-between;display:flex" onclick="setTab('hesap')"><span>${svgI("pie",18)} ھېساباتلىشىش (يېشىل ۋە ئۈلۈشلەر)</span><span>←</span></button>
   <div class="mhead"><button class="btn s g" onclick="cShift(-1)" aria-label="ئالدىنقى ئاي">→</button><b>${mname}</b><button class="btn s g" onclick="cShift(1)" aria-label="كېيىنكى ئاي">←</button></div>
   <div class="grid">
@@ -3097,8 +3098,8 @@ async function outFinal(id){
 }
 async function handDel(id){if(!await ask("بۇ پۇل تاپشۇرۇش خاتىرىسى ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;logDel("hand",S.hand.find(x=>x.id===id));S.hand=S.hand.filter(x=>x.id!==id);closeM();go()}
 async function cashCount(){
-  const {usd,som}=cashMoves();
-  const f=await form("پۇلنى ساناش",[{n:"u",l:"قولىڭىزدا ئەمەلىيەتتە قانچە دوللار بار؟ (ئەپتە "+fmtN(usd)+" $)",num:1},{n:"z",l:"قانچە سوم بار؟ (ئەپتە "+fmtN(som)+")",num:1},{n:"n",l:"ئىزاھات (ئىختىيارى)"}],"تۈزىتىش");
+  const CMc=cashMoves(),usd=r2(CMc.usd-CMc.pend.usd),som=Math.round(CMc.som-CMc.pend.som);
+  const f=await form("پۇلنى ساناش",[{n:"u",l:"قولىڭىزدا ئەمەلىيەتتە قانچە دوللار بار؟ (ئەپتە "+fmtN(usd)+" $"+(CMc.pend.usd?" · ⏳ سەرپ قىلىنغان "+fmtN(CMc.pend.usd)+" ئېلىنغان":"")+")",num:1},{n:"z",l:"قانچە سوم بار؟ (ئەپتە "+fmtN(som)+")",num:1},{n:"n",l:"ئىزاھات (ئىختىيارى)"}],"تۈزىتىش");
   if(!f||(f.u===""&&f.z===""))return;S.cadj=S.cadj||[];const out=[];
   if(f.u!==""){const d=r2(num(f.u)-usd);if(d){S.cadj.push({id:uid(),date:today(),time:nowT(),amount:d,cur:"USD",note:(f.n||"").trim()});out.push((d>0?"+":"")+fmtN(d)+" $")}}
   if(f.z!==""){const d=Math.round(num(f.z)-som);if(d){S.cadj.push({id:uid(),date:today(),time:nowT(),amount:d,cur:"UZS",note:(f.n||"").trim()});out.push((d>0?"+":"")+fmtN(d)+" سوم")}}
@@ -3795,7 +3796,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.52";
+const APP_VER="6.53";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
