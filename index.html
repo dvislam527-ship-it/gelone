@@ -2890,10 +2890,11 @@ function sandoq(){
   const ncM=nc.filter(inM),ncT=ncM.reduce((a,e)=>a+e.a,0);
   const lastH=[...(S.hand||[])].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time))[0];
   const [y,m]=cMonth.split("-").map(Number),mname=MONTHL[m-1]+" "+y;
-  return `<div class="cashhero"><small>قولۇمدىكى نەق پۇل</small>
-   <div class="cash2"><div><small>دوللار</small><b class="${usd<0?"neg":""}">${fmtN(usd)} $</b></div><div><small>سوم</small><b class="${som<0?"neg":""}">${fmtN(som)}</b></div></div>
-   <div class="foot">${rt?`جەمئىي ≈ ${fmt(bal)} · كۇرس ${fmtN(rt)}`:"كۇرس يېزىلمىغان"}${lastH?` · ئاخىرقى تاپشۇرۇش ${fD(lastH.date)}`:""}</div>
-   ${som<-0.5?`<div class="foot" style="margin-top:4px">⚠ سوم مىنۇستا: سوم چىقىمىڭىز سوم كىرىمىڭىزدىن ئارتۇق. دوللار بوزۇپ «سوم ⇄ $» غا يازسىڭىز تەڭلىشىدۇ.</div>`:""}
+  return `<div class="cashhero"><small>قولۇمدىكى نەق پۇل (ھەممىسى $ ھېسابىدا)</small>
+   <div style="font-size:34px;font-weight:800;margin:4px 0" class="${bal<0?"neg":""}">${rt?fmt(bal):fmtN(usd)+" $"}</div>
+   <div class="cash2" style="opacity:.75;font-size:13px"><div><small>دوللار</small><b class="${usd<0?"neg":""}">${fmtN(usd)} $</b></div><div><small>سوم</small><b class="${som<0?"neg":""}">${fmtN(som)}</b></div></div>
+   <div class="foot">${rt?`كۇرس ${fmtN(rt)}`:"كۇرس يېزىلمىغان"}${lastH?` · ئاخىرقى تاپشۇرۇش ${fD(lastH.date)}`:""}</div>
+   ${som<-0.5&&rt?`<button class="btn" style="width:100%;margin-top:8px" onclick="fxFix()">⚖ سوم مىنۇسىنى تەڭلەش (${fmtN(-som)} سوم = ${fmtN(r2(-som/rt))} $)</button>`:""}
    <div class="row" style="margin-top:12px"><button class="btn" style="flex:1;padding:13px" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" onclick="fxNew()">سوم ⇄ $</button></div>
    <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="act('gider')">چىقىم</button><button class="btn g" style="flex:1" onclick="cashCount()">ساناش</button></div></div>
   <button class="btn g" style="width:100%;margin-bottom:12px;justify-content:space-between;display:flex" onclick="setTab('hesap')"><span>${svgI("pie",18)} ھېساباتلىشىش (يېشىل ۋە ئۈلۈشلەر)</span><span>←</span></button>
@@ -2918,6 +2919,11 @@ async function fxNew(){
   const x={id:uid(),date:today(),time:nowT(),dir:f.dir==="u2s"?"u2s":"s2u",som:Math.round(num(f.som)),rate:num(f.rt),usd:num(f.usd)||r2(num(f.som)/num(f.rt))};
   S.fxx=S.fxx||[];S.fxx.push(x);keepRate(today(),x.rate);go();toast(x.dir==="s2u"?somF(x.som)+" → "+fmtN(x.usd)+" $":fmtN(x.usd)+" $ → "+somF(x.som));
 }
+async function fxFix(){
+  const {usd,som}=cashMoves(),rt=getRate();if(som>-0.5||!rt)return;
+  const sm=Math.round(-som),us=r2(sm/rt);
+  if(!await ask("سوم مىنۇستا: "+somF(-som)+"\nدوللاردىن "+fmtN(us)+" $ بوزۇپ "+somF(sm)+" ئالغان دەپ يېزىلىدۇ (كۇرس "+fmtN(rt)+").\nجەمئىي پۇل ئۆزگەرمەيدۇ. ماقۇلمۇ؟","ھەئە، تەڭلە"))return;
+  S.fxx=S.fxx||[];S.fxx.push({id:uid(),date:today(),time:nowT(),dir:"u2s",som:sm,rate:rt,usd:us});go();toast("تەڭلەندى")}
 async function fxDel(id){const x=(S.fxx||[]).find(y=>y.id===id);if(!x)return;if(!await ask("ئالماشتۇرۇش: "+somF(x.som)+" ⇄ "+fmtN(x.usd)+" $\nبۇ خاتىرە ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;S.fxx=S.fxx.filter(y=>y.id!==id);go()}
 function cShift(d){const [y,m]=cMonth.split("-").map(Number),n=new Date(y,m-1+d,1);cMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");render()}
 async function expEdit(id){await editX(id);expList()}
@@ -3725,7 +3731,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.49";
+const APP_VER="6.50";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
