@@ -2875,7 +2875,21 @@ function cashMoves(){
   (S.fxx||[]).forEach(x=>{const b={d:x.date,t:x.time||"",txt:"ئالماشتۇرۇش · كۇرس "+fmtN(x.rate),on:`fxDel('${x.id}')`,ic:"note",ex:1};
     if(x.dir==="u2s"){E.push(U({...b,a:-num(x.usd)}));E.push(Z({...b,a:num(x.som)}))}else{E.push(Z({...b,a:-num(x.som)}));E.push(U({...b,a:num(x.usd)}))}});
   E.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
-  const B={USD:0,UZS:0};E.forEach(e=>{B[e.c]=e.c==="UZS"?Math.round(B[e.c]+e.a):r2(B[e.c]+e.a);e.bal=B[e.c]});
+  /* بىر پۇل يېتىشمىسە، ئاپتوماتىك ھالدا يەنە بىرىدىن شۇ كۈنى كۇرس بىلەن ئالماشتۇرۇلىدۇ (خاتىرە ساقلانمايدۇ، ھەر قېتىم ھېسابلىنىدۇ) */
+  const B={USD:0,UZS:0},OUT=[];
+  E.forEach(e=>{
+    if(e.a<0&&!e.ex){const c=e.c,o=c==="UZS"?"USD":"UZS",rate=getRate(e.d);
+      const need=c==="UZS"?Math.ceil(-(B.UZS+e.a)):r2(-(B.USD+e.a));
+      if(need>0.004&&rate&&B[o]>0.004){
+        const mk=(cc,a)=>({d:e.d,t:e.t,txt:"ئاپتوماتىك ئالماشتۇرۇش · كۇرس "+fmtN(rate),on:"",ic:"note",ex:1,auto:1,c:cc,a});
+        let somA,usdA;
+        if(c==="UZS"){somA=need;usdA=r2(somA/rate);if(usdA>B.USD){usdA=B.USD;somA=Math.round(usdA*rate)}}
+        else{usdA=need;somA=Math.round(usdA*rate);if(somA>B.UZS){somA=B.UZS;usdA=r2(somA/rate)}}
+        if(somA>0&&usdA>0){
+          if(c==="UZS"){const x1=mk("USD",-usdA),x2=mk("UZS",somA);[x1,x2].forEach(x=>{B[x.c]=x.c==="UZS"?Math.round(B[x.c]+x.a):r2(B[x.c]+x.a);x.bal=B[x.c];OUT.push(x)})}
+          else{const x1=mk("UZS",-somA),x2=mk("USD",usdA);[x1,x2].forEach(x=>{B[x.c]=x.c==="UZS"?Math.round(B[x.c]+x.a):r2(B[x.c]+x.a);x.bal=B[x.c];OUT.push(x)})}}}}
+    B[e.c]=e.c==="UZS"?Math.round(B[e.c]+e.a):r2(B[e.c]+e.a);e.bal=B[e.c];OUT.push(e)});
+  E.length=0;OUT.forEach(x=>E.push(x));
   const rt=getRate();
   /* دوللار ۋە سوم ئايرىم، راست ھالەت بىلەن قايتۇرۇلىدۇ (مىنۇس بولسا مىنۇس كۆرۈنىدۇ) */
   return {E,bal:r2(B.USD+(rt?B.UZS/rt:0)),usd:r2(B.USD),som:r2(B.UZS),nc};
@@ -3731,7 +3745,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.50";
+const APP_VER="6.51";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
