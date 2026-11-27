@@ -933,9 +933,9 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
   }
 })();
 </script>
-
-
-
+<script type="application/json" id="seedphotos"></script>
+<script type="application/json" id="initdata"></script>
+<script type="application/json" id="seeddata"></script>
 <script>
 const TABS=[["panel","باش بەت"],["kasa","سېتىش"],["urun","تاۋارلار"],["sandoq","پۇل ساندۇقى"],["hesap","ھېساباتلىشىش"],["musteri","مۇشتەرى ۋە نېسى"],["alis","مال كىرگۈزۈش"],["gider","چىقىملار"],["islem","بارلىق خاتىرىلەر"],["rapor","دوكلاتلار"],["not","Not"],["ayar","تەڭشەكلەر"]];
 const KEY="stok-ug-v2";
@@ -3044,7 +3044,7 @@ function handShow(id){
   const {E}=cashMoves(),ae=E.find(e=>e.on===`handShow('${h.id}')`)||{},after=ae.bal;
   $("#sheet").innerHTML=`<div class="okbar noprint"><span class="okic">${svgI("up",18)}</span><div><b>${h.fx?somF(h.fx.amt):fmt(h.amount)} تاپشۇرۇلدى</b><small>${esc(h.to)} · ${fD(h.date)} ${esc(h.time||"")}</small></div></div>
   <div class="card" style="margin:0"><dl class="kv"><dt>كىمگە</dt><dd>${esc(h.to)}</dd>${h.src==="own"?`<dt>مەنبە</dt><dd>💼 ئۆز چۆنتىكىمدىن (سەرمايە)</dd>`:""}<dt>سومما</dt><dd>${fmt(h.amount)}${h.fx?" · "+fxNote(h.fx):""}</dd>${h.note?`<dt>ئىزاھات</dt><dd>${esc(h.note)}</dd>`:""}<dt>قولدا قالغان</dt><dd><b>${amtC(after??0,ae.c||"USD")}</b></dd>${(()=>{if(handWho(h)==="boss"){const D=bossDebt();return D.has?`<dt>قالغان قەرز</dt><dd class="neg">${fmt(D.left)}</dd>`:""}const o=ledger().ps.find(x=>x.id===handWho(h));return o?`<dt>بېرىشكە قالغان</dt><dd>${fmt(o.left)}</dd>`:""})()}</dl></div>
-  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" onclick="closeM()">تامام</button>${msgBtn("",handText(h),"ھېسابات يوللاش")}<button class="x e" onclick="outFinal('${h.id}')">${h.pend?"⏳ Tür seç":"✎ Türü değiştir"}</button><button class="x" onclick="handDel('${h.id}')">ئۆچۈرۈش</button></div>`;
+  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" onclick="closeM()">تامام</button>${msgBtn("",handText(h),"ھېسابات يوللاش")}<button class="x e" onclick="outEdit('${h.id}')">✎ Düzenle</button><button class="x e" onclick="outFinal('${h.id}')">${h.pend?"⏳ Tür seç":"✎ Türü değiştir"}</button><button class="x" onclick="handDel('${h.id}')">ئۆچۈرۈش</button></div>`;
   $("#modal").classList.add("on");
 }
 
@@ -3082,6 +3082,22 @@ async function outNew(){
   if(zs){h.fx={cur:"UZS",amt:Math.round(num(f.a)),rate:num(f.rt)};if(hd===today())keepRate(today(),h.fx.rate)}
   S.hand.push(h);go();toast("Kaydedildi · türünü sonra seçersin");
 }
+async function outEdit(id){
+  const h=(S.hand||[]).find(x=>x.id===id);if(!h)return;
+  const P_=PART(),CM=cashMoves(),r=handWho(h);
+  const who=[["boss",P_.boss],...P_.shares.map(x=>[x.id,x.me?"Ben kendim kullandım":x.name])];
+  if(!who.some(x=>x[0]===r))who.push([r,h.to||whoName(r)]);
+  const zs=!!h.fx;
+  const f=await form("Düzenle",[{n:"w",l:"Kime verildi / kim kullandı?",v:r,opts:who},{n:"cu",l:"Hangi para?",v:zs?"uzs":"usd",opts:[["usd","$ Dolar"],["uzs","Som"]]},{n:"a",l:"Ne kadar?",num:1,req:1,v:String(zs?h.fx.amt:h.amount)},{n:"rt",l:"Kur: 1 $ = ? som (sadece som için)",v:zs?String(h.fx.rate):(getRate()?String(getRate()):""),num:1},{n:"d",l:"Hangi gün?",v:h.date,type:"date"},{n:"n",l:"Ne için? (not)",v:h.note||"",req:1}],"Kaydet");
+  if(!f||!num(f.a))return;
+  const z=f.cu==="uzs";if(z&&!num(f.rt)){await note("Som için kuru yaz.");return}
+  const hd=/^\d{4}-\d{2}-\d{2}$/.test(f.d||"")?f.d:h.date;
+  if(f.w!==r){h.who=f.w;h.to=whoName(f.w)}
+  h.date=hd;h.note=(f.n||"").trim();
+  if(z){h.amount=r2(num(f.a)/num(f.rt));h.fx={cur:"UZS",amt:Math.round(num(f.a)),rate:num(f.rt)}}
+  else{h.amount=num(f.a);delete h.fx}
+  go();closeM();toast("Düzeltildi");
+}
 async function outFinal(id){
   const h=(S.hand||[]).find(x=>x.id===id);if(!h)return;
   const P_=PART(),a=num(h.amount),r=handWho(h),isBoss=r==="boss",D=bossDebt();
@@ -3093,8 +3109,10 @@ async function outFinal(id){
     <button type="button" onclick="dlgClose('exp')">📉 Masraf<small>Net kâr −${fmt(a)} · ${eff}</small></button>
     ${isBoss?"":`<button type="button" onclick="dlgClose('own')">👤 ${nm} payından<small>${nm} kalan hakkı −${fmt(a)} · başkası etkilenmez</small></button>`}
     <button type="button" onclick="dlgClose('boss')">🟢 ${esc(P_.boss)}'e teslim edildi<small>${D.has?"Borç "+fmt(D.left)+" → "+fmt(r2(D.left-a)):"Borçtan düşer"}</small></button>
-   </div><div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">Sonra</button></div>`);
+   </div><div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">Sonra</button><button class="btn g" onclick="dlgClose('edit')">✎ Düzenle</button><button class="btn g" onclick="dlgClose('del')">🗑 Sil</button></div>`);
   if(!v)return;
+  if(v==="edit"){setTimeout(()=>outEdit(id),50);return}
+  if(v==="del"){setTimeout(()=>handDel(id),50);return}
   if(v==="exp"){
     const x={id:uid(),time:h.time||nowT(),cat:"پۇل چىقىرىلدى · "+(h.to||whoName(r)),amount:a,date:h.date,note:h.note||"",from:h.id};if(h.fx)x.fx=h.fx;
     S.expenses.push(x);S.hand=S.hand.filter(y=>y.id!==h.id);toast("Masrafa eklendi");
@@ -3802,7 +3820,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.54";
+const APP_VER="6.55";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
