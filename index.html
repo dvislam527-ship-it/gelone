@@ -1750,7 +1750,7 @@ async function sgSave(){
 let H2C=null;
 function needH2C(){
   if(window.html2canvas)return Promise.resolve(window.html2canvas);if(H2C)return H2C;
-  const src=location.protocol==="file:"?["html2canvas.min.js"]:["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js","https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"];
+  const src=location.protocol==="file:"?["html2canvas.min.js"]:["html2canvas.min.js","https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js","https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"];
   H2C=new Promise((ok,no)=>{let i=0;const nx=()=>{if(i>=src.length){H2C=null;no(new Error("lib"));return}const s=document.createElement("script");s.src=src[i++];s.onload=()=>window.html2canvas?ok(window.html2canvas):nx();s.onerror=nx;document.head.appendChild(s)};nx()});
   return H2C;
 }
@@ -3700,7 +3700,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.46";
+const APP_VER="6.47";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
