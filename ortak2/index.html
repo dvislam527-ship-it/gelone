@@ -3141,7 +3141,7 @@ async function outFinal(id){
 }
 async function handDel(id){if(!await ask("بۇ پۇل تاپشۇرۇش خاتىرىسى ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;logDel("hand",S.hand.find(x=>x.id===id));S.hand=S.hand.filter(x=>x.id!==id);closeM();go()}
 /* ---------- Ortak 2: ayrı uygulamadan gelen kayıtlar; onaylayınca hesaba işlenir ---------- */
-let O2R=null,O2ERR="",O2BUSY=false,O2TRIED=false,O2NO=false;
+let O2R=null,O2ERR="",O2BUSY=false,O2TRIED=false,O2NO=false,O2DET="";
 const o2sig=o=>hsh(JSON.stringify(o));
 const o2cp=o=>JSON.parse(JSON.stringify(o));
 async function o2Fetch(){
@@ -3176,6 +3176,27 @@ function o2Desc(it){const o=it.o;
   return {a:"Mal girişi",b:o2Prod(o.pid)+" × "+fmtN(num(o.qty)),v:"",s:o.who||""};
 }
 const O2ST={new:"🆕 Yeni",chg:"✏️ Değişti",ok:"✅ Onaylı",no:"🚫 Reddedildi"};
+function o2Det(){
+  const R=O2R;if(!R)return "";
+  const tg=h=>String(h||"").replace(/<[^>]*>/g,"");
+  const tm=t=>{if(!t)return "";const d=new Date(t);return fD(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"))+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+  const un=id=>((R.users||[]).find(u=>u.id===id)||{}).name||"";
+  const rc=R.receipts||[],py=R.payments||[],ex=R.expenses||[],sl=R.sales||[],by=R.buys||[];
+  const sold=r2(rc.reduce((a,x)=>a+num(x.total),0)),paid=r2(rc.reduce((a,x)=>a+num(x.paid),0)),pays=r2(py.reduce((a,x)=>a+num(x.amount),0)),exs=r2(ex.reduce((a,x)=>a+num(x.amount),0));
+  const sum=`<div class="card" style="margin:0 0 10px"><dl class="kv"><dt>Satış (${rc.length} fiş)</dt><dd>${fmt(sold)}</dd><dt>Satışta alınan</dt><dd>${fmt(paid)}</dd><dt>Nisiye tahsilatı</dt><dd>${fmt(pays)}</dd><dt>Verdiği nisiye</dt><dd>${fmt(r2(sold-paid))}</dd><dt>Masraf</dt><dd class="neg">−${fmt(exs)}</dd></dl></div>`;
+  const stk=(R.products||[]).map(p=>({n:p.name,q:num(p.open)+by.filter(b=>b.pid===p.id).reduce((a,b)=>a+num(b.qty),0)-sl.filter(x=>x.pid===p.id).reduce((a,x)=>a+num(x.qty),0)}));
+  const cur=new Set((S.products||[]).map(p=>p.id)),cc=new Set((S.customers||[]).map(c=>c.id));
+  const nCu=(R.customers||[]).filter(c=>!cc.has(c.id)),nPr=(R.products||[]).filter(p=>!cur.has(p.id));
+  const li=(a,b,c)=>`<div class="li" style="cursor:default"><span dir="auto"><b>${esc(a)}</b><small>${esc(b||"")}</small></span><b>${c||""}</b></div>`;
+  const box=(t,k,body)=>`<button class="btn g" style="width:100%;margin-bottom:8px" onclick="O2DET=O2DET==='${k}'?'':'${k}';render()">${t} ${O2DET===k?"▲":"▼"}</button>${O2DET===k?body:""}`;
+  const lg=(R.log||[]).slice().reverse().slice(0,60).map(o=>li(tg(o.d),tm(o.at)+(un(o.u)?" · "+un(o.u):""),"")).join("")||li("Kayıt yok","","");
+  const tr=(R.trash||[]).slice().reverse().slice(0,40).map(t=>{const r=t.r||{};return li("Silinen satış S-"+num(r.no)+" · "+o2Cust(r.cid),tm(t.at)+(un(t.by)?" · "+un(t.by):"")+" · "+(t.sales||[]).length+" ürün satırı",fmt(num(r.total)))}).join("")||li("Silinen yok","","");
+  return `<div class="sec" style="border-radius:12px 12px 0 0"><span ${NT.dir}>Ortak 2'nin tüm hareketleri</span><span></span></div><div style="margin-bottom:14px">${sum}
+  ${box("📦 Stok sayıları (onun uygulamasında)","stk",`<div class="lst" style="margin-bottom:10px">${stk.map(x=>li(x.n,"",fmtN(x.q))).join("")}</div>`)}
+  ${box("🗑 Silinenler ("+(R.trash||[]).length+")","tr",`<div class="lst" style="margin-bottom:10px">${tr}</div>`)}
+  ${box("🕘 Kim ne yaptı","lg",`<div class="lst" style="margin-bottom:10px">${lg}</div>`)}
+  ${box("👥 Yeni müşteri/ürün ("+(nCu.length+nPr.length)+")","nw",`<div class="lst" style="margin-bottom:10px">${nCu.map(c=>li("Müşteri: "+c.name,c.phone||"","")).join("")}${nPr.map(p=>li("Ürün: "+p.name,"",fmt(num(p.price)))).join("")||""}${nCu.length+nPr.length?"":li("Yok","","")}</div>`)}</div>`;
+}
 function o2Page(){
   if(!O2TRIED&&!O2BUSY)setTimeout(o2Load,30);
   const hold=cashMoves().o2;
@@ -3190,7 +3211,8 @@ function o2Page(){
   ${nw.length+ch.length>1?`<button class="btn" style="width:100%;margin-bottom:12px" onclick="o2All()">✅ Hepsini onayla (${nw.length+ch.length})</button>`:""}
   ${box("🆕 Onay bekleyenler",nw)}${box("✏️ Onaydan sonra değişenler",ch)}${box("✅ Onaylananlar",ok.slice(0,30))}
   ${no.length?`<button class="btn g" style="width:100%;margin-bottom:8px" onclick="O2NO=!O2NO;render()">🚫 Reddedilenler (${no.length}) ${O2NO?"▲":"▼"}</button>${O2NO?box("🚫 Reddedilenler",no):""}`:""}
-  ${O2R&&!items.length?`<div class="foot" ${NT.dir}>Henüz kayıt yok.</div>`:""}`;
+  ${O2R&&!items.length?`<div class="foot" ${NT.dir}>Henüz kayıt yok.</div>`:""}
+  ${o2Det()}`;
 }
 function o2Take(it,cost){
   const R=O2R,cp=o2cp;
@@ -3957,7 +3979,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.57";
+const APP_VER="6.58";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
