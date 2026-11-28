@@ -937,9 +937,10 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <script type="application/json" id="initdata"></script>
 <script type="application/json" id="seeddata"></script>
 <script>
-const TABS=[["panel","باش بەت"],["kasa","سېتىش"],["urun","تاۋارلار"],["sandoq","پۇل ساندۇقى"],["hesap","ھېساباتلىشىش"],["musteri","مۇشتەرى ۋە نېسى"],["alis","مال كىرگۈزۈش"],["gider","چىقىملار"],["islem","بارلىق خاتىرىلەر"],["rapor","دوكلاتلار"],["not","Not"],["ayar","تەڭشەكلەر"]];
-const KEY="stok-ug-v2";
-const blank=()=>({cur:"₺",shop:"",addr:"",phone:"",products:[],buys:[],sales:[],receipts:[],expenses:[],customers:[],payments:[],trash:[],services:[],ustas:[],seq:0,sseq:0,pseq:0,rates:{}});
+const TABS=[["panel","باش بەت"],["kasa","سېتىش"],["urun","تاۋارلار"],["sandoq","پۇل ساندۇقى"],["hesap","ھېساباتلىشىش"],["musteri","مۇشتەرى ۋە نېسى"],["alis","مال كىرگۈزۈش"],["gider","چىقىملار"],["islem","بارلىق خاتىرىلەر"],["rapor","دوكلاتلار"],["not","Not"],["o2","Ortak 2"],["ayar","تەڭشەكلەر"]];
+const SHOP_ID=window.SHOP_ID||"main",P2=SHOP_ID!=="main";
+const KEY=P2?"stok-ug-"+SHOP_ID:"stok-ug-v2";
+const blank=()=>({cur:"₺",shop:"",addr:"",phone:"",products:[],buys:[],sales:[],receipts:[],expenses:[],customers:[],payments:[],trash:[],services:[],ustas:[],seq:0,sseq:0,pseq:0,rates:{},o2ok:[],o2no:[],o2d:[]});
 let S=blank(),tab="panel",docRef=null,saveT=null,Q="",sel=null;
 let svF="open",hMonth="",hMode="pasta",dMode="satis",searching=false;
 let cartJoin=null,cartPm="n",cart=[],cartCid="",cartDisc="",cartNote="",cartPaid="",rMode="ay",rDay="",rMonth="",rYear="",stream=null;
@@ -1052,9 +1053,9 @@ function merge3(B,L,R){
   }
   for(const [ak,sk] of [["receipts","seq"],["services","sseq"],["payments","pseq"]]){
     const arr=out[ak]||[],rIds=new Set((R[ak]||[]).map(x=>x.id)),bIds=new Set((B[ak]||[]).map(x=>x.id));
-    let s=Math.max(num(L[sk]),num(R[sk]),...arr.map(x=>num(x.no)),0);
+    let s=Math.max(num(L[sk]),num(R[sk]),...arr.filter(x=>!x.o2).map(x=>num(x.no)),0);
     const used=new Set(arr.filter(x=>rIds.has(x.id)).map(x=>x.no));
-    arr.forEach(x=>{if(!rIds.has(x.id)&&!bIds.has(x.id)&&used.has(x.no))x.no=++s;used.add(x.no)});
+    arr.forEach(x=>{if(!x.o2&&!rIds.has(x.id)&&!bIds.has(x.id)&&used.has(x.no))x.no=++s;used.add(x.no)});
     out[sk]=s;
   }
   return out;
@@ -1113,21 +1114,21 @@ function go(){persist();render()}
 function render(){
   applyTheme();
   const T=k=>(TABS.find(t=>t[0]===k)||["","ئەخلەت ساندۇقى"])[1];
-  $("#shopName").textContent=S.shop||"دۇكىنىم";
+  $("#shopName").textContent=(S.shop||"دۇكىنىم")+(P2?" · Ortak 2":"");
   {const rt=document.querySelector(".bar .rt");if(rt)rt.innerHTML=CUR?`<button class="uchip" onclick="lockNow()" title="قۇلۇپلاش / ئىشلەتكۈچى ئالماشتۇرۇش"><i>${esc(uIni(CUR.name))}</i><span dir="auto">${esc(CUR.name)}</span></button>`:""}
   if(LK.on&&LK.mode==="setup"&&USERS().length){LK.mode="pick";lockDraw()}
   $("#pillSub").textContent=tab==="panel"?fD(today()):tab==="islem"?MONTHL[+hMonth.slice(5)-1]+" "+hMonth.slice(0,4):T(tab);
   const st=STAFF();document.body.classList.toggle("staff",st);
   [["cost","nocost"],["rep","norep"],["stock","nostock"],["edit","noedit"]].forEach(([k,c])=>document.body.classList.toggle(c,!CAN(k)));
-  if((BOSS_TABS.has(tab)&&(tab==="trash"?st:!CAN("rep")))||tab==="servis")tab="panel";
+  if(P2?P2_HIDE.has(tab):((BOSS_TABS.has(tab)&&(tab==="trash"?st:!CAN("rep")))||tab==="servis"))tab="panel";
   if(tab==="alis")tab="urun";
   const mb=k=>{const t=TABS.find(x=>x[0]===k);return t?`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(TICON[k],22)}${t[1]}</button>`:""};
   $("#dw").innerHTML=`<h3>${esc(S.shop||"دۇكىنىم")}${st?`<small class="role">خىزمەتچى ھالىتى</small>`:""}</h3>`
     +`<div class="dwg">كۈندىلىك ئىشلار</div>`+["panel","kasa","urun","musteri"].map(mb).join("")
-    +(CAN("rep")?`<div class="dwg">باشقۇرۇش</div>`+["gider","hesap","not","islem","rapor"].map(mb).join(""):"")
+    +(CAN("rep")?`<div class="dwg">باشقۇرۇش</div>`+(P2?["gider","islem"]:["gider","hesap","not","o2","islem","rapor"]).map(mb).join(""):"")
     +`<div class="dwg"></div>`+mb("ayar");
-  $("#tabbar").innerHTML=[["panel","home","باش بەت"],["kasa","cart","سېتىش"],["urun","box","تاۋار"],["musteri","users","نېسى"],...(CAN("rep")?[["not","note","Not"]]:[])].map(([k,i,l])=>`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(i,26)}${l}</button>`).join("");
-  const f={panel,islem,kasa,urun,alis,gider,musteri,servis,sandoq,hesap,rapor,ayar,trash,not:notePage}[tab];
+  $("#tabbar").innerHTML=[["panel","home","باش بەت"],["kasa","cart","سېتىش"],["urun","box","تاۋار"],["musteri","users","نېسى"],...(CAN("rep")&&!P2?[["not","note","Not"]]:[])].map(([k,i,l])=>`<button class="${k===tab?"on":""}" onclick="setTab('${k}')">${svgI(i,26)}${l}</button>`).join("");
+  const f={panel,islem,kasa,urun,alis,gider,musteri,servis,sandoq,hesap,rapor,ayar,trash,not:notePage,o2:o2Page}[tab];
   const body=f();
   /* قايتا سىزىلغاندا تىزىملىكلەر ئورنىدا قالسۇن (iPhone دا سەكرەپ كەتمىسۇن) */
   const keep=[...document.querySelectorAll("#view .chips,#view .lst,#view .cchips,#view .whl")].map(e=>[e.className,e.scrollTop,e.scrollLeft]),wy=window.scrollY;
@@ -1183,7 +1184,7 @@ function dayList(n){const out=[];for(let i=n-1;i>=0;i--){const d=new Date();d.se
 
 /* ---------- Ana sayfa ---------- */
 const IC={home:"M3 11l9-7 9 7v9H3z",cart:"M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01",box:"M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10",inb:"M12 3v12M7 10l5 5 5-5M4 21h16",exp:"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6",users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5",chart:"M4 20V11M10 20V5M16 20v-8M22 20H2",gear:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2",pie:"M12 3a9 9 0 1 0 9 9h-9zM15 3.3A9 9 0 0 1 20.7 9H15z",cal:"M4 6h16v15H4zM4 10h16M8 3v4M16 3v4",note:"M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",coin:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM14.5 9H11a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9.5M12 7v2M12 15v2",trash:"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"};
-const TICON={hesap:"pie",sandoq:"wal",servis:"tool",panel:"home",islem:"clock",kasa:"cart",urun:"box",alis:"inb",gider:"exp",musteri:"users",rapor:"chart",ayar:"gear",not:"note"};
+const TICON={hesap:"pie",sandoq:"wal",servis:"tool",panel:"home",islem:"clock",kasa:"cart",urun:"box",alis:"inb",gider:"exp",musteri:"users",rapor:"chart",ayar:"gear",not:"note",o2:"users"};
 const svgI=(k,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="${IC[k]}"/></svg>`;
 const PAL=["#1fc7b6","#f4b955","#ff6f61","#8b7bff","#6cb4ff","#45d99a"];
 function donut(items,center1,center2){
@@ -1581,7 +1582,7 @@ async function checkout(){
     if(o.length){const v=await dlgOpen(`<h3>بۇ مۇشتەرىنىڭ كونا نېسى چېكى بار</h3><p class="dmsg">بۇ سېتىش قايسى چەككە يېزىلسۇن؟</p><div class="jseg" style="margin:8px 0">${o.map(R=>`<button type="button" onclick="dlgClose('${R.id}')"><b dir="ltr">${rNo(R)}</b> غا قوشۇش<small>نېسى ${fmt(famBal(R))} · ${fD(R.date)}</small></button>`).join("")}<button type="button" onclick="dlgClose('new')">＋ يېڭى چەك ئېچىش</button></div><div class="row dbtn"><button class="btn g" onclick="dlgClose(null)">بىكار قىلىش</button></div>`);
       if(!v)return;cartJoin=v}}
   const jr=joinTarget();
-  if(!jr)S.seq=Math.max(num(S.seq),...S.receipts.map(x=>num(x.no)),0)+1;
+  if(!jr)S.seq=Math.max(num(S.seq),...S.receipts.filter(x=>!x.o2).map(x=>num(x.no)),0)+1;
   const r={id:uid(),no:jr?0:S.seq,date:today(),time:nowT(),cid:cartCid,disc,total:tot,paid:r2(paid),paidU:r2(pU),paidS:r2(pS),rate:(pS?rate:0),change,pm:cartPm,by:WHO()};if(jr){r.par=jr.id;r.ts=Date.now()}{const nt=String(cartNote||"").trim();if(nt){if(jr){const rt=rRoot(jr);rt.note=(rt.note?rt.note+" · ":"")+nt}else r.note=nt}}
   S.receipts.push(r);
   {const av=avgMap();cart.forEach(x=>S.sales.push({id:uid(),pid:x.pid,qty:x.qty,price:x.price,cost:r2(av[x.pid]||0),date:r.date,cid:cartCid,rid:r.id,who:""}))}
@@ -1843,7 +1844,7 @@ function rBal(r){
 }
 function openR(cid){return S.receipts.filter(r=>r.cid===cid&&rBal(r)>0.004).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")))}
 function payNo(p){const a=(p.alloc||[])[0],r=a&&S.receipts.find(x=>x.id===a.rid);if(!r)return pNo(p);const R=rRoot(r);return rNo(R)+"/"+(rChain(R).indexOf(p)+2)}
-function nextP(){S.pseq=Math.max(num(S.pseq),...S.payments.map(x=>num(x.no)),0)+1;return S.pseq}
+function nextP(){S.pseq=Math.max(num(S.pseq),...S.payments.filter(x=>!x.o2).map(x=>num(x.no)),0)+1;return S.pseq}
 const PMU={n:"naqd",k:"karta",h:"o'tkazma"};
 function payHTML(p){
   const c=S.customers.find(x=>x.id===p.cid)||{},cur=(cust().find(x=>x.c.id===p.cid)||{debt:0}).debt,has=p.after!=null,left=has?p.after:cur;
@@ -2520,11 +2521,12 @@ async function editDate(k,id){
   go();if($("#modal").classList.contains("on")){if(k==="r")showR(id);else if(k==="p")showP(id)}toast(msg.join(" · "));
 }
 /* ---------- خوجايىن / خىزمەتچى ھالىتى ---------- */
-const BOSS_TABS=new Set(["servis","sandoq","hesap","alis","gider","islem","rapor","trash","not"]);
+const BOSS_TABS=new Set(["servis","sandoq","hesap","alis","gider","islem","rapor","trash","not","o2"]);
+const P2_HIDE=new Set(["servis","sandoq","hesap","rapor","trash","not","o2"]);
 function STAFF(){if(USERS().length)return !CUR||CUR.role!=="boss";try{return localStorage.getItem(KEY+"-role")==="staff"}catch(e){return false}}
 /* خىزمەتچىلەرنىڭ ھوقۇقلىرى: خوجايىن ھەر بىر ئادەمگە ئايرىم بېرىدۇ */
 const PERMS=[["cost","ئېلىش باھاسى ۋە پايدىنى كۆرۈش"],["rep","ھېسابات، چىقىم ۋە دوكلات"],["stock","يېڭى تاۋار ۋە مال كىرگۈزۈش"],["edit","ئۆچۈرۈش ۋە تۈزىتىش"]];
-function CAN(k){if(!USERS().length)return !STAFF();if(!CUR)return false;if(CUR.role==="boss")return true;const P=CUR.perm||{};return k==="cost"?!!(P.cost||P.rep):!!P[k]}
+function CAN(k){if(P2&&k==="cost")return false;if(!USERS().length)return !STAFF();if(!CUR)return false;if(CUR.role==="boss")return true;const P=CUR.perm||{};return k==="cost"?!!(P.cost||P.rep):!!P[k]}
 function need(k){if(CAN(k))return true;note("بۇ ئىشقا ھوقۇقىڭىز يوق.\nخوجايىندىن سوراڭ.");return false}
 function boss(){if(!STAFF())return true;note("بۇ ئىش پەقەت خوجايىن ھالىتىدە قىلىنىدۇ.\nخوجايىندىن سوراڭ.");return false}
 async function setRole(r){
@@ -2859,21 +2861,24 @@ let cMonth="";
 function cashMoves(){
   const E=[],isCash=x=>!x.pm||x.pm==="n",nc=[];
   const U=(o)=>({...o,c:"USD"}),Z=(o)=>({...o,c:"UZS"});
-  S.receipts.forEach(r=>{if(!num(r.paid))return;const b={d:r.date,t:r.time||"",txt:"سېتىش "+rNo(r)+(cname(r.cid)?" · "+cname(r.cid):""),on:`showR('${r.id}')`,ic:"cart"};
+  S.receipts.forEach(r=>{if(!num(r.paid))return;const b={d:r.date,t:r.time||"",txt:"سېتىش "+rNo(r)+(cname(r.cid)?" · "+cname(r.cid):""),on:`showR('${r.id}')`,ic:"cart",o2:r.o2};
     if(!isCash(r)){nc.push({...b,a:num(r.paid),pm:r.pm});return}
     if(r.paidU!=null||r.paidS!=null){if(num(r.paidU))E.push(U({...b,a:num(r.paidU)}));if(num(r.paidS))E.push(Z({...b,a:num(r.paidS)}));}
     else E.push(r.fx?Z({...b,a:num(r.change)>0?Math.round(num(r.paid)*num(r.fx.rate)):Math.round(num(r.fx.amt))}):U({...b,a:num(r.paid)}))});
   S.sales.filter(x=>!x.rid&&num(x.paid)).forEach(x=>E.push(U({d:x.date,t:"",a:num(x.paid),txt:(x.qty<0?"قايتۇرۇش · ":"سېتىش · ")+pname(x.pid),on:x.ret&&S.receipts.some(r=>r.id===x.ret)?`showR('${x.ret}')`:"",ic:x.qty<0?"inb":"cart"})));
-  S.payments.forEach(p=>{const b={d:p.date,t:p.time||"",txt:"نېسى قايتۇردى · "+(cname(p.cid)||"مۇشتەرى")+(p.no||(p.alloc||[]).length?" · "+payNo(p):""),on:`showP('${p.id}')`,ic:"coin"};
+  S.payments.forEach(p=>{const b={d:p.date,t:p.time||"",txt:"نېسى قايتۇردى · "+(cname(p.cid)||"مۇشتەرى")+(p.no||(p.alloc||[]).length?" · "+payNo(p):""),on:`showP('${p.id}')`,ic:"coin",o2:p.o2};
     if(!isCash(p)){nc.push({...b,a:p.amount,pm:p.pm});return}
     E.push(p.fx?Z({...b,a:num(p.fx.amt)}):U({...b,a:p.amount}))});
   S.services.filter(x=>num(x.paid)).forEach(x=>E.push(U({d:x.st>=3&&x.done?x.done:x.date,t:"",a:num(x.paid),txt:"رېمونت #"+x.no+" · "+(cname(x.cid)||""),on:`svcShow('${x.id}')`,ic:"tool"})));
-  S.expenses.filter(x=>!x.nocash).forEach(x=>{const b={d:x.date,t:x.time||"",txt:(x.cat||"چىقىم")+(x.note?" · "+x.note:""),on:x.ins&&S.receipts.some(r=>r.id===x.ins)?`showR('${x.ins}')`:`editX('${x.id}')`,ic:"exp"};E.push(x.fx?Z({...b,a:-num(x.fx.amt)}):U({...b,a:-x.amount}))});
+  S.expenses.filter(x=>!x.nocash).forEach(x=>{const b={d:x.date,t:x.time||"",txt:(x.cat||"چىقىم")+(x.note?" · "+x.note:""),on:x.ins&&S.receipts.some(r=>r.id===x.ins)?`showR('${x.ins}')`:`editX('${x.id}')`,ic:"exp",o2:x.o2};E.push(x.fx?Z({...b,a:-num(x.fx.amt)}):U({...b,a:-x.amount}))});
   if(S.buyCash)S.buys.forEach(b=>E.push(U({d:b.date,t:"",a:-b.qty*b.cost,txt:"مال ئېلىندى · "+pname(b.pid)+" × "+fmtN(b.qty),on:`editB('${b.id}')`,ic:"truck"})));
   (S.hand||[]).forEach(h=>{if(h.src==="own"||h.pend)return;const b={d:h.date,t:h.time||"",txt:(handWho(h)==="boss"?"تاپشۇرۇلدى → ":"ئۈلۈش بېرىلدى → ")+whoName(handWho(h)),on:`handShow('${h.id}')`,ic:"up",hand:1};E.push(h.fx?Z({...b,a:-num(h.fx.amt)}):U({...b,a:-h.amount}))});
   (S.cadj||[]).forEach(c=>{const b={d:c.date,t:c.time||"",a:c.amount,txt:"ساناپ تۈزىتىلدى"+(c.note?" · "+c.note:""),on:`cadjShow('${c.id}')`,ic:"note"};E.push(c.cur==="UZS"?Z(b):U(b))});
   (S.fxx||[]).forEach(x=>{const b={d:x.date,t:x.time||"",txt:"ئالماشتۇرۇش · كۇرس "+fmtN(x.rate),on:`fxShow('${x.id}')`,ic:"note",ex:1};
     if(x.dir==="u2s"){E.push(U({...b,a:-num(x.usd)}));E.push(Z({...b,a:num(x.som)}))}else{E.push(Z({...b,a:-num(x.som)}));E.push(U({...b,a:num(x.usd)}))}});
+  const O2={usd:0,som:0};
+  {const O=E.filter(e=>e.o2);if(O.length){O.forEach(e=>{if(e.c==="UZS")O2.som+=e.a;else O2.usd+=e.a});const K=E.filter(e=>!e.o2);E.length=0;K.forEach(x=>E.push(x))}
+   (S.o2d||[]).forEach(d=>{const b={d:d.date,t:d.time||"",a:num(d.amount),txt:"Ortak 2 teslim etti"+(d.note?" · "+d.note:""),on:`o2dShow('${d.id}')`,ic:"coin"};if(d.cur==="UZS"){E.push(Z(b));O2.som-=num(d.amount)}else{E.push(U(b));O2.usd-=num(d.amount)}})}
   E.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
   /* بىر پۇل يېتىشمىسە، ئاپتوماتىك ھالدا يەنە بىرىدىن شۇ كۈنى كۇرس بىلەن ئالماشتۇرۇلىدۇ (خاتىرە ساقلانمايدۇ، ھەر قېتىم ھېسابلىنىدۇ) */
   const B={USD:0,UZS:0},OUT=[];
@@ -2893,12 +2898,12 @@ function cashMoves(){
   const rt=getRate();
   /* دوللار ۋە سوم ئايرىم، راست ھالەت بىلەن قايتۇرۇلىدۇ (مىنۇس بولسا مىنۇس كۆرۈنىدۇ) */
   const PD={usd:0,som:0};(S.hand||[]).filter(h=>h.pend).forEach(h=>{if(h.fx)PD.som+=num(h.fx.amt);else PD.usd+=num(h.amount)});PD.usd=r2(PD.usd);PD.som=Math.round(PD.som);
-  return {E,bal:r2(B.USD+(rt?B.UZS/rt:0)),usd:r2(B.USD),som:r2(B.UZS),nc,pend:PD};
+  return {E,bal:r2(B.USD+(rt?B.UZS/rt:0)),usd:r2(B.USD),som:r2(B.UZS),nc,pend:PD,o2:{usd:r2(O2.usd),som:Math.round(O2.som)}};
 }
 function cashOnHand(){return cashMoves().bal}
 const amtC=(a,c)=>c==="UZS"?fmtN(Math.round(a))+" so'm":fmtN(a)+" "+(S.cur||"$");
 function sandoq(){
-  const {E,usd,som,bal,nc}=cashMoves(),t=today(),rt=getRate();cMonth=cMonth||t.slice(0,7);
+  const {E,usd,som,bal,nc,o2:o2h}=cashMoves(),t=today(),rt=getRate();cMonth=cMonth||t.slice(0,7);
   const inM=e=>e.d&&e.d.startsWith(cMonth),M=E.filter(inM);
   const sum=(f,c)=>M.filter(e=>e.c===c&&f(e)).reduce((a,e)=>a+e.a,0);
   const two=(f,neg)=>{const u=sum(f,"USD"),z=sum(f,"UZS"),s=v=>neg?-v:v;return [u?amtC(s(u),"USD"):"",z?amtC(s(z),"UZS"):""].filter(Boolean).join("<br>")||"0"};
@@ -2913,6 +2918,7 @@ function sandoq(){
    <div class="row" style="margin-top:12px"><button class="btn" style="flex:1;padding:13px" onclick="handNew('boss')">${svgI("up",18)} پۇل تاپشۇرۇش</button><button class="btn g" onclick="fxNew()">سوم ⇄ $</button></div>
    <div class="row" style="margin-top:8px"><button class="btn g" style="flex:1" onclick="act('gider')">چىقىم</button><button class="btn g" style="flex:1" onclick="cashCount()">ساناش</button></div>
    ${pendList().length?`<div class="foot" dir="ltr" style="text-align:left">Gerçekte elinde olması gereken: ${fmtN(r2(usd-cashMoves().pend.usd))} $ · ${somF(som-cashMoves().pend.som)}<br>⏳ Not sekmesinde türü seçilmemiş kayıtlar var; seçince kasa buna iner.</div>`:""}</div>
+  ${!P2&&(o2h.usd||o2h.som||(S.o2d||[]).length)?`<div class="card" style="margin:0 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span dir="ltr">Ortak 2'de duran para</span><b dir="ltr">${fmtN(o2h.usd)} $ · ${somF(o2h.som)}</b></div><div class="foot" dir="ltr" style="text-align:left">Onayladığın Ortak 2 satışları kasana girmez; para sana teslim edilince "Teslim aldım" ile yazılır.</div><button class="btn g" style="width:100%;margin-top:6px" onclick="o2dNew()">💵 Teslim aldım</button></div>`:""}
   <button class="btn g" style="width:100%;margin-bottom:12px;justify-content:space-between;display:flex" onclick="setTab('hesap')"><span>${svgI("pie",18)} ھېساباتلىشىش (يېشىل ۋە ئۈلۈشلەر)</span><span>←</span></button>
   <div class="mhead"><button class="btn s g" onclick="cShift(-1)" aria-label="ئالدىنقى ئاي">→</button><b>${mname}</b><button class="btn s g" onclick="cShift(1)" aria-label="كېيىنكى ئاي">←</button></div>
   <div class="grid">
@@ -3134,6 +3140,124 @@ async function outFinal(id){
   go();closeM();
 }
 async function handDel(id){if(!await ask("بۇ پۇل تاپشۇرۇش خاتىرىسى ئۆچۈرۈلسۇنمۇ؟","ئۆچۈرۈش",1))return;logDel("hand",S.hand.find(x=>x.id===id));S.hand=S.hand.filter(x=>x.id!==id);closeM();go()}
+/* ---------- Ortak 2: ayrı uygulamadan gelen kayıtlar; onaylayınca hesaba işlenir ---------- */
+let O2R=null,O2ERR="",O2BUSY=false,O2TRIED=false,O2NO=false;
+const o2sig=o=>hsh(JSON.stringify(o));
+const o2cp=o=>JSON.parse(JSON.stringify(o));
+async function o2Fetch(){
+  try{const r=await fetch(SB_URL+"/rest/v1/shop_state?id=eq.ortak2&select=s,t",{headers:{apikey:SB_KEY}});
+    if(!r.ok)throw new Error("HTTP "+r.status);const a=await r.json();
+    if(!a[0]){O2R=null;O2ERR="Ortak 2 verisi henüz yok.";return}
+    O2R=JSON.parse(a[0].s);O2ERR=""}catch(e){O2ERR="Bağlanamadı: "+(e.message||"")}
+}
+async function o2Load(){O2BUSY=true;O2TRIED=true;if(tab==="o2")render();await o2Fetch();O2BUSY=false;render()}
+function o2Items(){
+  const R=O2R;if(!R)return [];const out=[];
+  const rows=id=>(R.sales||[]).filter(x=>x.rid===id||x.ret===id);
+  (R.receipts||[]).forEach(r=>out.push({k:"receipts",id:r.id,d:r.date||"",t:r.time||"",o:r,rows:rows(r.id)}));
+  (R.payments||[]).forEach(p=>out.push({k:"payments",id:p.id,d:p.date||"",t:p.time||"",o:p}));
+  (R.expenses||[]).forEach(x=>out.push({k:"expenses",id:x.id,d:x.date||"",t:x.time||"",o:x}));
+  (R.buys||[]).forEach(b=>out.push({k:"buys",id:b.id,d:b.date||"",t:b.time||"",o:b}));
+  out.forEach(it=>{it.sig=o2sig(it.rows?{o:it.o,r:it.rows}:it.o)});
+  return out.sort((a,b)=>(b.d+b.t).localeCompare(a.d+a.t));
+}
+function o2St(it){
+  if((S.o2no||[]).some(x=>x.id===it.id))return "no";
+  const ok=(S.o2ok||[]).find(x=>x.id===it.id),have=(S[it.k]||[]).some(x=>x.id===it.id);
+  if(ok&&have)return ok.sig===it.sig?"ok":"chg";
+  return "new";
+}
+const o2Cust=cid=>((O2R&&O2R.customers||[]).find(c=>c.id===cid)||{}).name||cname(cid)||"—";
+const o2Prod=pid=>((O2R&&O2R.products||[]).find(p=>p.id===pid)||{}).name||pname(pid);
+function o2Desc(it){const o=it.o;
+  if(it.k==="receipts"){const left=r2(num(o.total)-num(o.paid));return {a:"Satış S-"+num(o.no),b:o2Cust(o.cid),v:fmt(num(o.total)),s:"ödenen "+fmt(num(o.paid))+(left>0.004?" · nisiye "+fmt(left):"")}}
+  if(it.k==="payments")return {a:"Tahsilat",b:o2Cust(o.cid),v:o.fx?somF(o.fx.amt):fmt(num(o.amount)),s:o.note||""};
+  if(it.k==="expenses")return {a:"Masraf",b:o.cat||"",v:o.fx?somF(o.fx.amt):fmt(num(o.amount)),s:o.note||""};
+  return {a:"Mal girişi",b:o2Prod(o.pid)+" × "+fmtN(num(o.qty)),v:"",s:o.who||""};
+}
+const O2ST={new:"🆕 Yeni",chg:"✏️ Değişti",ok:"✅ Onaylı",no:"🚫 Reddedildi"};
+function o2Page(){
+  if(!O2TRIED&&!O2BUSY)setTimeout(o2Load,30);
+  const hold=cashMoves().o2;
+  const items=o2Items(),by=st=>items.filter(it=>o2St(it)===st);
+  const nw=by("new"),ch=by("chg"),ok=by("ok"),no=by("no");
+  const row=it=>{const D=o2Desc(it),st=o2St(it);return `<div class="li" onclick="o2Show('${it.k}','${it.id}')"><span><b dir="auto">${esc(D.a)} · ${esc(D.b)}</b><small>${fD(it.d)}${it.t?" · "+esc(it.t):""}${it.o.by?" · "+esc(it.o.by):""}</small>${D.s?`<small class="itl">${esc(D.s)}</small>`:""}</span><b>${D.v}</b></div>`};
+  const box=(t,L,extra)=>L.length?`<div class="sec" style="border-radius:12px 12px 0 0"><span ${NT.dir}>${t} (${L.length})</span><span>${extra||""}</span></div><div class="lst" style="border-radius:0 0 16px 16px;margin-bottom:14px">${L.map(row).join("")}</div>`:"";
+  return `<div class="foot" ${NT.dir}>Ortak 2 uygulamasında girilen kayıtlar buraya gelir. Sen onaylamadan kasana, stoğuna, nisiyene ve kârına işlenmez. Onayladıktan sonra normal kayıt gibi düzenlenir ve silinir.</div>
+  <div class="row" style="margin:12px 0"><button class="btn" style="flex:1" onclick="o2Load()">${O2BUSY?"Yükleniyor…":"↻ Yenile"}</button><button class="btn g" onclick="o2dNew()">💵 Teslim aldım</button></div>
+  ${O2ERR?`<div class="foot neg" ${NT.dir}>${esc(O2ERR)}</div>`:""}
+  <div class="card" style="margin:0 0 12px"><div class="row" style="justify-content:space-between"><span ${NT.dir}>Ortak 2'de duran para</span><b dir="ltr">${fmtN(hold.usd)} $ · ${somF(hold.som)}</b></div></div>
+  ${nw.length+ch.length>1?`<button class="btn" style="width:100%;margin-bottom:12px" onclick="o2All()">✅ Hepsini onayla (${nw.length+ch.length})</button>`:""}
+  ${box("🆕 Onay bekleyenler",nw)}${box("✏️ Onaydan sonra değişenler",ch)}${box("✅ Onaylananlar",ok.slice(0,30))}
+  ${no.length?`<button class="btn g" style="width:100%;margin-bottom:8px" onclick="O2NO=!O2NO;render()">🚫 Reddedilenler (${no.length}) ${O2NO?"▲":"▼"}</button>${O2NO?box("🚫 Reddedilenler",no):""}`:""}
+  ${O2R&&!items.length?`<div class="foot" ${NT.dir}>Henüz kayıt yok.</div>`:""}`;
+}
+function o2Take(it,cost){
+  const R=O2R,cp=o2cp;
+  const nc=cid=>{if(cid&&!S.customers.some(c=>c.id===cid)){const c=(R.customers||[]).find(x=>x.id===cid);if(c)S.customers.push({...cp(c),u:""})}};
+  const np=pid=>{if(pid&&!S.products.some(p=>p.id===pid)){const p=(R.products||[]).find(x=>x.id===pid);if(p)S.products.push({...cp(p),u:""})}};
+  if(it.k==="receipts"){S.receipts=S.receipts.filter(x=>x.id!==it.id);S.sales=S.sales.filter(x=>x.rid!==it.id&&x.ret!==it.id)}
+  else S[it.k]=(S[it.k]||[]).filter(x=>x.id!==it.id);
+  if(it.k==="receipts"){
+    if(it.o.par&&!S.receipts.some(x=>x.id===it.o.par)){const par=o2Items().find(x=>x.k==="receipts"&&x.id===it.o.par);if(par)o2Take(par)}
+    nc(it.o.cid);S.receipts.push({...cp(it.o),o2:1,u:""});
+    it.rows.forEach(x=>{np(x.pid);S.sales.push({...cp(x),o2:1,u:"",cid:x.cid||it.o.cid})});
+  }else if(it.k==="payments"){
+    nc(it.o.cid);const p={...cp(it.o),o2:1,u:""};p.alloc=(p.alloc||[]).filter(a=>S.receipts.some(x=>x.id===a.rid));S.payments.push(p);
+  }else if(it.k==="expenses"){S.expenses.push({...cp(it.o),o2:1,u:""})}
+  else{np(it.o.pid);const b={...cp(it.o),o2:1,u:""};if(cost!=null)b.cost=cost;S.buys.push(b)}
+  S.o2ok=(S.o2ok||[]).filter(x=>x.id!==it.id);S.o2ok.push({id:it.id,sig:it.sig});
+  S.o2no=(S.o2no||[]).filter(x=>x.id!==it.id);
+}
+function o2Undo(it){
+  if(it.k==="receipts"){S.receipts=S.receipts.filter(x=>x.id!==it.id);S.sales=S.sales.filter(x=>x.rid!==it.id&&x.ret!==it.id)}
+  else S[it.k]=(S[it.k]||[]).filter(x=>x.id!==it.id);
+  S.o2ok=(S.o2ok||[]).filter(x=>x.id!==it.id);
+}
+async function o2Cost(it){
+  const f=await form("Mal girişinin maliyeti",[{n:"c",l:"Birim maliyet ($) · "+o2Prod(it.o.pid),num:1,req:1,v:String(num(it.o.cost)||"")}],"Kaydet");
+  return f&&f.c!==""?num(f.c):null;
+}
+async function o2Show(k,id){
+  const it=o2Items().find(x=>x.k===k&&x.id===id);if(!it)return;
+  const st=o2St(it),D=o2Desc(it);
+  const rows=(it.rows||[]).map(x=>`<div class="li" style="cursor:default"><span dir="auto">${esc(o2Prod(x.pid))} × ${fmtN(num(x.qty))}<small>${fmt(num(x.price))}</small></span><b>${fmt(num(x.qty)*num(x.price))}</b></div>`).join("");
+  const btn=(v,l,c)=>`<button class="btn ${c||"g"}" onclick="dlgClose('${v}')">${l}</button>`;
+  const v=await dlgOpen(`<h3 ${NT.dir}>${esc(D.a)} · ${esc(D.b)}</h3><div class="foot" ${NT.dir} style="text-align:left;margin-bottom:6px">${O2ST[st]} · ${fD(it.d)} ${esc(it.t)}${it.o.by?" · "+esc(it.o.by):""}<br>${esc(D.s||"")}${it.o.note&&it.k==="receipts"?"<br>"+esc(it.o.note):""}</div>${rows?`<div class="lst" style="margin:8px 0">${rows}</div>`:""}
+    <div class="row dbtn" style="flex-wrap:wrap;gap:6px">${st==="ok"?btn("undo","↩ Geri al"):st==="chg"?btn("ok","✅ Yeni halini onayla",""):st==="no"?btn("ok","✅ Onayla",""):btn("ok","✅ Onayla","")}${st==="new"||st==="chg"?btn("no","🚫 Reddet"):""}${btn("x","Kapat")}</div>`);
+  if(!v||v==="x")return;
+  if(v==="ok"){let cost=null;if(it.k==="buys"){cost=await o2Cost(it);if(cost==null)return}o2Take(it,cost);go();toast("Hesaba işlendi")}
+  else if(v==="undo"){if(!await ask("Bu kayıt hesaptan çıkarılsın mı? Ortak 2'de durmaya devam eder.","Geri al",1))return;o2Undo(it);go();toast("Geri alındı")}
+  else if(v==="no"){S.o2no=S.o2no||[];S.o2no.push({id:it.id});go();toast("Reddedildi")}
+}
+async function o2All(){
+  const L=o2Items().filter(it=>{const s=o2St(it);return s==="new"||s==="chg"});
+  const nb=L.filter(it=>it.k==="buys").length,L2=L.filter(it=>it.k!=="buys");
+  if(!L2.length)return;
+  if(!await ask(L2.length+" kayıt onaylanıp hesaba işlensin mi?"+(nb?"\n(Mal girişleri tek tek onaylanır.)":""),"Onayla"))return;
+  L2.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t)).forEach(it=>o2Take(it));go();toast(L2.length+" kayıt işlendi");
+}
+async function o2dNew(){
+  const f=await form("Ortak 2 teslim etti",[{n:"cu",l:"Hangi para?",v:"",opts:[["","— seç —"],["USD","$ Dolar"],["UZS","Som"]]},{n:"a",l:"Ne kadar?",num:1,req:1},{n:"d",l:"Hangi gün?",v:today(),type:"date"},{n:"n",l:"Not",v:""}],"Kaydet");
+  if(!f||!num(f.a))return;if(!f.cu){await note("Hangi para olduğunu seç ($ veya som).");return}
+  S.o2d=S.o2d||[];S.o2d.push({id:uid(),date:/^\d{4}-\d{2}-\d{2}$/.test(f.d||"")?f.d:today(),time:nowT(),amount:f.cu==="UZS"?Math.round(num(f.a)):r2(num(f.a)),cur:f.cu,note:(f.n||"").trim()});
+  go();toast("Kaydedildi");
+}
+async function o2dShow(id){
+  const d=(S.o2d||[]).find(x=>x.id===id);if(!d)return;
+  const v=await recAct("Ortak 2 teslim: "+(d.cur==="UZS"?somF(d.amount):fmtN(d.amount)+" $")+" · "+fD(d.date));if(!v)return;
+  if(v==="del"){if(!await ask("Bu teslim kaydı silinsin mi?","ئۆچۈرۈش",1))return;S.o2d=S.o2d.filter(x=>x.id!==id);go();return}
+  const f=await form("Teslimi düzenle",[{n:"cu",l:"Hangi para?",v:d.cur,opts:[["USD","$ Dolar"],["UZS","Som"]]},{n:"a",l:"Ne kadar?",num:1,req:1,v:String(d.amount)},{n:"d",l:"Hangi gün?",v:d.date,type:"date"},{n:"n",l:"Not",v:d.note||""}],"Kaydet");
+  if(!f||!num(f.a))return;d.cur=f.cu;d.amount=f.cu==="UZS"?Math.round(num(f.a)):r2(num(f.a));if(/^\d{4}-\d{2}-\d{2}$/.test(f.d||""))d.date=f.d;d.note=(f.n||"").trim();go();toast("Düzeltildi");
+}
+function o2Banner(){
+  if(P2||!CAN("rep")||!O2R)return "";
+  const n=o2Items().filter(it=>{const s=o2St(it);return s==="new"||s==="chg"}).length;
+  return n?`<button class="btn" style="width:100%;margin-bottom:12px;display:flex;justify-content:space-between" onclick="setTab('o2')"><span dir="ltr">🆕 Ortak 2: ${n} kayıt onay bekliyor</span><b>›</b></button>`:"";
+}
+{const p0=panel;panel=function(){return o2Banner()+p0()}}
+if(!P2){const pk=()=>{if(!CUR||document.hidden)return;o2Fetch().then(()=>{if(tab==="panel"||tab==="o2")render()})};setTimeout(pk,5000);setInterval(pk,180000)}
+
 async function cashCount(){
   const CMc=cashMoves(),usd=r2(CMc.usd-CMc.pend.usd),som=Math.round(CMc.som-CMc.pend.som);
   const f=await form("پۇلنى ساناش",[{n:"u",l:"قولىڭىزدا ئەمەلىيەتتە قانچە دوللار بار؟ (ئەپتە "+fmtN(usd)+" $"+(CMc.pend.usd?" · ⏳ سەرپ قىلىنغان "+fmtN(CMc.pend.usd)+" ئېلىنغان":"")+")",num:1},{n:"z",l:"قانچە سوم بار؟ (ئەپتە "+fmtN(som)+")",num:1},{n:"n",l:"ئىزاھات (ئىختىيارى)"}],"تۈزىتىش");
@@ -3833,7 +3957,7 @@ function authCheck(final){
 function lockOpen(mode){LK.on=true;LK.mode=mode;LK.uid="";LK.pin="";LK.err="";if(mode==="pick"&&USERS().length===1)LK.uid=USERS()[0].id;
   document.body.classList.add("locked");lockDraw()}
 function lockNow(){CUR=null;try{localStorage.removeItem(KEY+"-cu")}catch(e){}closeMenu();if(dlgRes)dlgClose(null);$("#modal").classList.remove("on");lockOpen("pick");render()}
-const APP_VER="6.56";
+const APP_VER="6.57";
 const verNum=v=>String(v).split(".").reduce((a,x)=>a*1000+(+x||0),0);
 /* iPhone كونا نەشرىنى ساقلاپ قالمىسۇن: يېڭى نەشىر بولسا ئۆزى يېڭىلىنىدۇ */
 function chkUpd(){
@@ -3964,7 +4088,7 @@ function actShow(){
 /* ---------- ئورتاق ساندان: ئۈچ كىشى Gmail سىز ئوخشاش سانلىق مەلۇماتنى كۆرىدۇ ---------- */
 const TEAM=window.TEAM=(()=>{
   const active=(typeof fetch==="function")&&!/(^|\.)claude\.ai$/.test(location.hostname)&&!/^(claude|artifacts?)\./.test(location.hostname)&&!/claudeusercontent/.test(location.hostname);
-  const ID="main",H={apikey:SB_KEY,"Content-Type":"application/json"};
+  const ID=SHOP_ID,H={apikey:SB_KEY,"Content-Type":"application/json"};
   let busy=false,again=false,poll=null,dT=null,err="",lastOk="",rT=0,started=false;
   try{rT=+localStorage.getItem(KEY+"-sht")||0}catch(e){}
   const url=q=>SB_URL+"/rest/v1/shop_state"+q;
@@ -3978,7 +4102,7 @@ const TEAM=window.TEAM=(()=>{
   async function daily(js){
     const d=today();let f="";try{f=localStorage.getItem(KEY+"-shbak")}catch(e){}
     if(f===d)return;
-    try{const r=await fetch(url("?on_conflict=id"),{method:"POST",headers:{...H,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify({id:"bak-"+d,s:js,t:Date.now(),by:DEV,updated_at:new Date().toISOString()})});
+    try{const r=await fetch(url("?on_conflict=id"),{method:"POST",headers:{...H,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify({id:"bak-"+(P2?SHOP_ID+"-":"")+d,s:js,t:Date.now(),by:DEV,updated_at:new Date().toISOString()})});
       if(r.ok)localStorage.setItem(KEY+"-shbak",d)}catch(e){}
   }
   function keep(js,t){rT=t;try{localStorage.setItem(KEY+"-shbase",js);localStorage.setItem(KEY+"-sht",String(t))}catch(e){}}
